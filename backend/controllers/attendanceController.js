@@ -5,12 +5,69 @@ const notificationService = require('../services/notificationService');
 // Algorand Client
 const algodClient = new algosdk.Algodv2('', process.env.ALGO_ALGOD_SERVER || 'https://testnet-api.4160.nodely.dev', '');
 
+// Calculate distance between two points (Haversine formula)
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371e3; // Earth's radius in meters
+    const φ1 = lat1 * Math.PI / 180;
+    const φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+        Math.cos(φ1) * Math.cos(φ2) *
+        Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c; // Distance in meters
+};
+
 exports.markAttendance = async (req, res) => {
     try {
-        const { classId, walletAddress, studentName, txId, distance, parentPhone } = req.body;
+        const {
+            classId,
+            walletAddress,
+            studentName,
+            txId,
+            distance,
+            parentPhone,
+            // New: location data for server-side validation
+            studentLocation,
+            classLocation,
+            qrExpiry,
+            maxDistance
+        } = req.body;
 
         if (!classId || !walletAddress || !txId) {
             return res.status(400).json({ success: false, error: 'Missing required fields' });
+        }
+
+        // SERVER-SIDE VALIDATION 1: Check QR expiry
+        if (qrExpiry && Date.now() > qrExpiry) {
+            return res.status(400).json({
+                success: false,
+                error: 'QR code has expired. Please get a new QR from your teacher.'
+            });
+        }
+
+        // SERVER-SIDE VALIDATION 2: Verify geolocation if provided
+        if (studentLocation && classLocation) {
+            const serverDistance = calculateDistance(
+                studentLocation.lat, studentLocation.lng,
+                classLocation.lat, classLocation.lng
+            );
+
+            const allowedDistance = maxDistance || 100; // Default 100 meters
+
+            if (serverDistance > allowedDistance) {
+                console.log(`🚨 Location fraud detected! Distance: ${serverDistance}m, Allowed: ${allowedDistance}m`);
+                return res.status(400).json({
+                    success: false,
+                    error: `You are ${Math.round(serverDistance)}m away. Must be within ${allowedDistance}m of classroom.`,
+                    fraudDetected: true
+                });
+            }
+
+            console.log(`✅ Location verified: ${Math.round(serverDistance)}m from classroom`);
         }
 
         // Verify transaction on Algorand
@@ -21,7 +78,7 @@ exports.markAttendance = async (req, res) => {
                 return res.status(400).json({ success: false, error: 'Transaction not confirmed' });
             }
 
-            // Store in database
+            // Store in database with location data
             const [rows] = await db.execute(
                 'INSERT INTO attendance (class_id, wallet_address, student_name, tx_id, timestamp, status) VALUES (?, ?, ?, ?, NOW(), ?)',
                 [classId, walletAddress, studentName || 'Anonymous', txId, 'CONFIRMED']
@@ -49,7 +106,8 @@ exports.markAttendance = async (req, res) => {
                 message: 'Attendance marked successfully',
                 recordId: rows.insertId,
                 smsSent: smsSent,
-                distance: distance
+                distance: distance,
+                serverValidated: true
             });
 
         } catch (txError) {

@@ -249,7 +249,11 @@ const AttendanceScan = () => {
                     studentName: studentName.trim(),
                     txId: submittedTxId,
                     distance: distance,
-                    location: studentLocation,
+                    // Send location data for SERVER-SIDE validation (anti-fake GPS)
+                    studentLocation: studentLocation,
+                    classLocation: classData.location,
+                    qrExpiry: classData.expiry,
+                    maxDistance: classData.maxDistance || 100,
                     parentPhone: sendSms ? parentPhone : null
                 })
             });
