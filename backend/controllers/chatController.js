@@ -1,28 +1,40 @@
 const db = require('../db');
 
-const OLLAMA_HOST = process.env.OLLAMA_HOST || 'http://localhost:11434';
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'gemma:2b';
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 
-async function callOllama(prompt) {
+async function callOpenAI(systemPrompt, userMessage) {
+    if (!OPENAI_API_KEY) {
+        throw new Error('OPENAI_API_KEY not configured');
+    }
+
     try {
-        const response = await fetch(`${OLLAMA_HOST}/api/generate`, {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${OPENAI_API_KEY}`
+            },
             body: JSON.stringify({
-                model: OLLAMA_MODEL,
-                prompt: prompt,
-                stream: false,
-                options: {
-                    temperature: 0.7,
-                    num_predict: 200
-                }
+                model: OPENAI_MODEL,
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: userMessage }
+                ],
+                temperature: 0.7,
+                max_tokens: 200
             })
         });
 
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error?.message || 'OpenAI API error');
+        }
+
         const data = await response.json();
-        return data.response || 'I could not generate a response.';
+        return data.choices[0]?.message?.content || 'I could not generate a response.';
     } catch (error) {
-        console.error('Ollama error:', error.message);
+        console.error('OpenAI error:', error.message);
         throw error;
     }
 }
@@ -58,7 +70,7 @@ User Context:
             }
         }
 
-        // Build prompt for Ollama
+        // System prompt for OpenAI
         const systemPrompt = `You are TrustCampus AI, a helpful assistant for a blockchain-based campus management platform.
 
 The platform features:
@@ -73,13 +85,9 @@ ${userContext}
 Guidelines:
 - Be concise and friendly (max 100 words)
 - Use simple language
-- Add emojis for modern feel
+- Add emojis for modern feel`;
 
-User Question: ${message}
-
-Response:`;
-
-        const response = await callOllama(systemPrompt);
+        const response = await callOpenAI(systemPrompt, message);
 
         res.json({
             success: true,
@@ -90,7 +98,7 @@ Response:`;
         console.error('Chat error:', error);
         res.status(500).json({
             error: 'Failed to process your question',
-            response: "I'm having trouble right now. Make sure Ollama is running!"
+            response: "I'm having trouble right now. Please check if the AI service is configured properly."
         });
     }
 };

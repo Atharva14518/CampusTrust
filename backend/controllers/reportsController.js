@@ -2,8 +2,11 @@ const axios = require('axios');
 const db = require('../db');
 const aiService = require('../services/aiService');
 
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+
 /**
- * Generate NAAC/NIRF style report using Ollama (legacy)
+ * Generate NAAC/NIRF style report using OpenAI
  */
 exports.generateReport = async (req, res) => {
     try {
@@ -23,26 +26,46 @@ exports.generateReport = async (req, res) => {
         Average Student Feedback Score (out of 10): ${contextData.avg_sentiment}. 
         Focus on "Institutional Values and Best Practices" and "Teaching-Learning and Evaluation". Keep it under 200 words.`;
 
-        const ollamaHost = process.env.OLLAMA_HOST || 'http://localhost:11434';
-        const model = process.env.OLLAMA_MODEL || 'gemma:2b';
+        if (!OPENAI_API_KEY) {
+            throw new Error('OPENAI_API_KEY not configured');
+        }
 
-        const response = await axios.post(`${ollamaHost}/api/generate`, {
-            model: model,
-            prompt: prompt,
-            stream: false
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${OPENAI_API_KEY}`
+            },
+            body: JSON.stringify({
+                model: OPENAI_MODEL,
+                messages: [
+                    { role: 'system', content: 'You are an educational report generator for NAAC/NIRF accreditation.' },
+                    { role: 'user', content: prompt }
+                ],
+                temperature: 0.7,
+                max_tokens: 300
+            })
         });
 
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error?.message || 'OpenAI API error');
+        }
+
+        const data = await response.json();
+        const reportText = data.choices[0]?.message?.content || 'Report generation failed.';
+
         res.json({
-            report: response.data.response,
+            report: reportText,
             data: contextData
         });
 
     } catch (error) {
-        console.error("Ollama Error:", error.message);
+        console.error("OpenAI Error:", error.message);
         res.status(500).json({
             error: "Failed to generate report",
             details: error.message,
-            suggestion: "Ensure Ollama is running (wsl ollama serve) and port 11434 is exposed."
+            suggestion: "Ensure OPENAI_API_KEY is set in environment variables."
         });
     }
 };

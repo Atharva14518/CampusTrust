@@ -1,39 +1,56 @@
 /**
- * AI Service using Ollama for local LLM inference
+ * AI Service using OpenAI GPT-4o-mini for LLM inference
  */
 
-const OLLAMA_HOST = process.env.OLLAMA_HOST || 'http://localhost:11434';
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'gemma:2b';
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 
-async function callOllama(prompt) {
+async function callOpenAI(prompt, systemMessage = '') {
+    if (!OPENAI_API_KEY) {
+        throw new Error('OPENAI_API_KEY not configured');
+    }
+
     try {
-        const response = await fetch(`${OLLAMA_HOST}/api/generate`, {
+        const messages = [];
+        if (systemMessage) {
+            messages.push({ role: 'system', content: systemMessage });
+        }
+        messages.push({ role: 'user', content: prompt });
+
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${OPENAI_API_KEY}`
+            },
             body: JSON.stringify({
-                model: OLLAMA_MODEL,
-                prompt: prompt,
-                stream: false,
-                options: {
-                    temperature: 0.7,
-                    num_predict: 500
-                }
+                model: OPENAI_MODEL,
+                messages: messages,
+                temperature: 0.7,
+                max_tokens: 500
             })
         });
 
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error?.message || 'OpenAI API error');
+        }
+
         const data = await response.json();
-        return data.response || '';
+        return data.choices[0]?.message?.content || '';
     } catch (error) {
-        console.error('Ollama error:', error.message);
+        console.error('OpenAI error:', error.message);
         throw error;
     }
 }
 
 /**
- * Generate attendance insights using Ollama
+ * Generate attendance insights using OpenAI
  */
 exports.generateAttendanceInsights = async (attendanceData) => {
-    const prompt = `You are an educational analytics AI. Analyze this attendance data and provide insights.
+    const systemMessage = 'You are an educational analytics AI. Always respond with valid JSON only, no markdown.';
+
+    const prompt = `Analyze this attendance data and provide insights.
 
 Attendance Data:
 - Total Records: ${attendanceData.totalRecords || 0}
@@ -41,18 +58,16 @@ Attendance Data:
 - Classes: ${JSON.stringify(attendanceData.byClass || {})}
 - By Day: ${JSON.stringify(attendanceData.byDay || {})}
 
-Provide a JSON response with this exact structure (no markdown):
+Respond with this exact JSON structure:
 {
     "summary": "One sentence summary of attendance patterns",
     "trends": ["trend 1", "trend 2", "trend 3"],
-    "atRiskStudents": ["student1 or empty array if none"],
+    "atRiskStudents": [],
     "recommendations": ["recommendation 1", "recommendation 2"]
-}
-
-JSON Response:`;
+}`;
 
     try {
-        const response = await callOllama(prompt);
+        const response = await callOpenAI(prompt, systemMessage);
 
         // Try to parse JSON from response
         const jsonMatch = response.match(/\{[\s\S]*\}/);
@@ -70,34 +85,32 @@ JSON Response:`;
     } catch (error) {
         console.error('AI insights error:', error);
         return {
-            summary: 'AI analysis temporarily unavailable. Ensure Ollama is running.',
+            summary: 'AI analysis temporarily unavailable. Check OpenAI API key configuration.',
             trends: ['Data collection ongoing'],
             atRiskStudents: [],
-            recommendations: ['Start ollama with: ollama serve']
+            recommendations: ['Verify OPENAI_API_KEY in environment variables']
         };
     }
 };
 
 /**
- * Generate class-specific report using Ollama
+ * Generate class-specific report using OpenAI
  */
 exports.generateClassReport = async (classId, attendanceRecords, students) => {
     const totalRecords = attendanceRecords?.length || 0;
     const uniqueStudents = students?.length || 0;
 
-    const prompt = `Generate a brief report for class ${classId}.
+    const prompt = `Generate a brief 2-3 sentence report for class ${classId}.
 
 Data:
 - Total Attendance Records: ${totalRecords}
 - Unique Students: ${uniqueStudents}
 - Average Attendance per Student: ${uniqueStudents > 0 ? (totalRecords / uniqueStudents).toFixed(1) : 0}
 
-Provide a 2-3 sentence summary of this class's attendance performance.
-
-Summary:`;
+Provide only the summary text, no formatting.`;
 
     try {
-        const response = await callOllama(prompt);
+        const response = await callOpenAI(prompt);
         return {
             classId,
             summary: response.trim() || `Class ${classId} has ${totalRecords} attendance records from ${uniqueStudents} students.`,
@@ -115,20 +128,20 @@ Summary:`;
 };
 
 /**
- * Analyze feedback sentiment using Ollama
+ * Analyze feedback sentiment using OpenAI
  */
 exports.analyzeFeedbackSentiment = async (feedbackText) => {
-    const prompt = `Analyze the sentiment of this feedback and respond with ONLY a JSON object:
+    const systemMessage = 'You are a sentiment analyzer. Respond only with valid JSON.';
 
-Feedback: "${feedbackText}"
+    const prompt = `Analyze the sentiment of this feedback:
 
-Response format (JSON only, no markdown):
-{"sentiment": "positive/negative/neutral", "score": 0.0-1.0}
+"${feedbackText}"
 
-JSON:`;
+Respond with only this JSON format:
+{"sentiment": "positive/negative/neutral", "score": 0.0-1.0}`;
 
     try {
-        const response = await callOllama(prompt);
+        const response = await callOpenAI(prompt, systemMessage);
 
         const jsonMatch = response.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
