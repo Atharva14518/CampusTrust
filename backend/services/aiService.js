@@ -2,11 +2,11 @@
  * AI Service using OpenAI GPT-4o-mini for LLM inference
  */
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-
 async function callOpenAI(prompt, systemMessage = '') {
-    if (!OPENAI_API_KEY) {
+    const apiKey = process.env.OPENAI_API_KEY;
+    const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+
+    if (!apiKey) {
         throw new Error('OPENAI_API_KEY not configured');
     }
 
@@ -21,10 +21,10 @@ async function callOpenAI(prompt, systemMessage = '') {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${OPENAI_API_KEY}`
+                'Authorization': `Bearer ${apiKey}`
             },
             body: JSON.stringify({
-                model: OPENAI_MODEL,
+                model: model,
                 messages: messages,
                 temperature: 0.7,
                 max_tokens: 500

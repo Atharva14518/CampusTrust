@@ -2,9 +2,6 @@ const axios = require('axios');
 const db = require('../db');
 const aiService = require('../services/aiService');
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-
 /**
  * Generate NAAC/NIRF style report using OpenAI
  */
@@ -26,7 +23,10 @@ exports.generateReport = async (req, res) => {
         Average Student Feedback Score (out of 10): ${contextData.avg_sentiment}. 
         Focus on "Institutional Values and Best Practices" and "Teaching-Learning and Evaluation". Keep it under 200 words.`;
 
-        if (!OPENAI_API_KEY) {
+        const apiKey = process.env.OPENAI_API_KEY;
+        const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+
+        if (!apiKey) {
             throw new Error('OPENAI_API_KEY not configured');
         }
 
@@ -34,10 +34,10 @@ exports.generateReport = async (req, res) => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${OPENAI_API_KEY}`
+                'Authorization': `Bearer ${apiKey}`
             },
             body: JSON.stringify({
-                model: OPENAI_MODEL,
+                model: model,
                 messages: [
                     { role: 'system', content: 'You are an educational report generator for NAAC/NIRF accreditation.' },
                     { role: 'user', content: prompt }

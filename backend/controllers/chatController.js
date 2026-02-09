@@ -1,10 +1,14 @@
 const db = require('../db');
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-
 async function callOpenAI(systemPrompt, userMessage) {
-    if (!OPENAI_API_KEY) {
+    const apiKey = process.env.OPENAI_API_KEY;
+    const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+
+    if (!apiKey) {
+        console.error('OPENAI_API_KEY env check:', {
+            hasKey: !!process.env.OPENAI_API_KEY,
+            envKeys: Object.keys(process.env).filter(k => k.includes('OPENAI'))
+        });
         throw new Error('OPENAI_API_KEY not configured');
     }
 
@@ -13,10 +17,10 @@ async function callOpenAI(systemPrompt, userMessage) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${OPENAI_API_KEY}`
+                'Authorization': `Bearer ${apiKey}`
             },
             body: JSON.stringify({
-                model: OPENAI_MODEL,
+                model: model,
                 messages: [
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: userMessage }
