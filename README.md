@@ -1,324 +1,364 @@
-# TrustCampus - Blockchain-Based Campus Management System
+# 🎓 TrustCampus - Blockchain-Powered Campus Management
 
-A decentralized platform for attendance tracking and certificate management built on Algorand blockchain with Lute wallet integration.
+A revolutionary **blockchain-based attendance and certificate management system** built on **Algorand**, featuring tamper-proof records, NFT certificates, AI-powered insights, and gamified engagement.
 
-## 🌟 Features
+> 🏆 **Hackathon-Ready** | Built with React + Node.js + Algorand + Lute Wallet
 
-### ✅ Implemented & Working
+![Algorand](https://img.shields.io/badge/Algorand-TestNet-blue)
+![React](https://img.shields.io/badge/React-18-61DAFB)
+![Node.js](https://img.shields.io/badge/Node.js-18+-339933)
+![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3-06B6D4)
 
-- **🔐 Lute Wallet Integration** - Secure transaction signing
-- **📱 Mobile QR Attendance** - Scan with phone camera
-- **🎓 NFT Certificates** - Real Algorand ASAs stored on IPFS
-- **⛓️ Smart Contracts** - Deployed on Algorand Testnet
-- **📊 Live Dashboard** - Real-time blockchain data
-- **👥 Student Names** - Visible in attendance tracking
-- **🔄 Auto-Refresh** - Live attendance updates every 3 seconds
-- **✅ Blockchain Verification** - All transactions on AlgoExplorer
+---
 
-## 🚀 Quick Start
+## 🚀 Features
+
+| Feature | Description |
+|---------|-------------|
+| **📱 QR Attendance** | Teachers generate QR codes; students scan to mark geo-fenced attendance |
+| **🌍 Geolocation Verified** | 100m radius verification ensures physical presence |
+| **🔗 Blockchain Records** | Every attendance stored immutably on Algorand |
+| **🏅 NFT Certificates** | Mint achievement certificates as tradeable NFTs |
+| **🏆 Gamified Leaderboard** | Points, streaks, badges for student engagement |
+| **🤖 AI Insights** | Ollama-powered chatbot and attendance analytics |
+| **📲 SMS Notifications** | Twilio integration for parent notifications |
+| **🛡️ Tamper-Proof Feedback** | Blockchain-verified student feedback system |
+
+---
+
+## 📦 Project Structure
+
+```
+trustcampus/
+├── frontend/               # React + Vite + TailwindCSS
+│   ├── src/
+│   │   ├── components/     # Navbar, ChatBot
+│   │   ├── pages/          # All app pages
+│   │   ├── context/        # Wallet context
+│   │   └── config.js       # API configuration
+│   └── .env                # Frontend env vars
+│
+├── backend/                # Node.js + Express + MySQL
+│   ├── controllers/        # Business logic
+│   ├── routes/             # API endpoints
+│   ├── services/           # AI, Notifications
+│   └── .env                # Backend env vars (DO NOT COMMIT)
+│
+└── contracts/              # PyTeal smart contracts
+```
+
+---
+
+## 🛠️ Quick Start Guide
 
 ### Prerequisites
-- Node.js 18+
-- MySQL 8+
-- Lute Wallet extension
-- Testnet ALGO (from faucet)
 
-### Installation (5 minutes)
+- **Node.js 18+** and npm
+- **MySQL** (local or cloud)
+- **Lute Wallet** browser extension
+- **Ollama** (optional, for AI features)
+- **Twilio Account** (optional, for SMS)
+
+### 1️⃣ Clone the Repository
 
 ```bash
-# 1. Install dependencies
-cd trustcampus/backend && npm install
-cd ../frontend && npm install
-
-# 2. Configure environment
-cd ../backend
-cp .env.example .env
-# Edit .env with your credentials
-
-# 3. Setup database
-mysql -u root -p < db_schema.sql
-mysql -u root -p trustcampus < migration_add_student_name.sql
-
-# 4. Deploy contracts
-npm run deploy
-
-# 5. Start servers
-# Terminal 1
-npm start
-
-# Terminal 2
-cd ../frontend
-npm run dev
+git clone https://github.com/Atharva14518/CampusTrust.git
+cd CampusTrust
 ```
 
-### Access
-- Frontend: http://localhost:5173
-- Backend: http://localhost:3000
+### 2️⃣ Backend Setup
 
-## 📱 How to Use
-
-### For Teachers (Attendance)
-
-1. Go to **Attendance** page
-2. Enter Class ID (e.g., "CS101")
-3. Click **Generate QR Code**
-4. Display QR on screen/projector
-5. Watch live attendance roll in!
-
-### For Students (Attendance)
-
-1. **Scan QR** with phone camera
-2. Browser opens attendance page
-3. **Connect Lute Wallet**
-4. **Enter your name**
-5. **Sign transaction**
-6. Done! ✅
-
-### For Students (Certificates)
-
-1. Go to **Certificates** page
-2. Fill in certificate details
-3. Upload certificate image
-4. Click **Mint Certificate NFT**
-5. Sign transaction
-6. View on AlgoExplorer!
-
-## 🏗️ Architecture
-
-```
-┌─────────────┐
-│   React     │ ← Lute Wallet Integration
-│  Frontend   │
-└──────┬──────┘
-       │
-   ┌───┴────┬──────────┐
-   │        │          │
-┌──▼──┐  ┌──▼────┐  ┌─▼────────┐
-│ API │  │Algorand│  │  IPFS    │
-│Node │  │Testnet │  │ Pinata   │
-└──┬──┘  └────────┘  └──────────┘
-   │
-┌──▼──┐
-│MySQL│
-└─────┘
+```bash
+cd backend
+npm install
 ```
 
-## 📚 Documentation
-
-- **[QUICK_START.md](./QUICK_START.md)** - Get started in 5 minutes
-- **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Complete setup guide
-- **[MOBILE_ATTENDANCE_GUIDE.md](./MOBILE_ATTENDANCE_GUIDE.md)** - Mobile QR scanning
-- **[IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md)** - Technical details
-- **[SETUP_CHECKLIST.md](./SETUP_CHECKLIST.md)** - Step-by-step checklist
-- **[FIXES_APPLIED.md](./FIXES_APPLIED.md)** - Recent bug fixes
-
-## 🔧 Tech Stack
-
-### Frontend
-- React 19.2.0
-- Vite 7.2.4
-- TailwindCSS 4.1.18
-- lute-connect 1.6.3
-- algosdk 3.5.2
-- qrcode.react 4.2.0
-
-### Backend
-- Node.js + Express 5.2.1
-- algosdk 2.7.0
-- MySQL 8+
-- Multer (file uploads)
-- Axios (IPFS)
-
-### Blockchain
-- Algorand Testnet
-- Smart Contracts (TEAL)
-- Lute Wallet
-- IPFS (Pinata)
-
-## 🎯 Smart Contracts
-
-Deployed on Algorand Testnet:
-
-- **Attendance Contract**: App ID 755213391
-- **Certificate Contract**: App ID 755213392
-- **Voting Contract**: App ID 755213403
-
-View on [AlgoExplorer](https://testnet.algoexplorer.io)
-
-## 🔐 Environment Variables
+Create `backend/.env` with:
 
 ```env
 # Database
-DB_HOST=127.0.0.1
-DB_PORT=3306
+DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=your_password
 DB_NAME=trustcampus
 
-# Algorand
-ALGO_ALGOD_SERVER=https://testnet-api.4160.nodely.dev
-LUTE_MNEMONIC=your 25 word mnemonic
+# Algorand (TestNet)
+ALGOD_SERVER=https://testnet-api.4160.nodely.dev
+ALGOD_PORT=
+ALGOD_TOKEN=
 
-# IPFS
-IPFS_API_KEY=your_pinata_api_key
-IPFS_SECRET_KEY=your_pinata_secret_key
+# Pinata (for NFT IPFS)
+PINATA_API_KEY=your_api_key
+PINATA_SECRET_KEY=your_secret_key
+
+# Twilio (optional - for SMS)
+TWILIO_ACCOUNT_SID=your_account_sid
+TWILIO_AUTH_TOKEN=your_auth_token
+TWILIO_PHONE_NUMBER=+1234567890
+
+# Ollama (optional - for AI)
+OLLAMA_HOST=http://localhost:11434
+OLLAMA_MODEL=gemma:2b
 ```
 
-## 📊 Database Schema
+Create the database:
 
 ```sql
--- Attendance with student names
+CREATE DATABASE trustcampus;
+
 CREATE TABLE attendance (
-    id INT PRIMARY KEY,
-    class_id VARCHAR(100),
-    wallet_address VARCHAR(255),
-    student_name VARCHAR(255),
-    tx_id VARCHAR(255),
-    timestamp TIMESTAMP
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    class_id VARCHAR(50),
+    wallet_address VARCHAR(100),
+    student_name VARCHAR(100),
+    tx_id VARCHAR(100),
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- NFT Certificates
 CREATE TABLE certificates (
-    id INT PRIMARY KEY,
-    student_address VARCHAR(255),
-    title VARCHAR(255),
-    course VARCHAR(255),
-    metadata_cid VARCHAR(255),
-    image_cid VARCHAR(255),
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    student_address VARCHAR(100),
+    title VARCHAR(200),
+    description TEXT,
+    ipfs_hash VARCHAR(100),
     asset_id BIGINT,
-    tx_id VARCHAR(255),
-    status VARCHAR(50)
+    tx_id VARCHAR(100),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE feedback (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    student_address VARCHAR(100),
+    class_id VARCHAR(50),
+    teacher_id VARCHAR(50),
+    feedback_text TEXT,
+    hash VARCHAR(100),
+    tx_id VARCHAR(100),
+    verified BOOLEAN DEFAULT FALSE,
+    sentiment_score FLOAT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
-## 🧪 Testing
+Start the backend:
 
-### Test Attendance
 ```bash
-# 1. Generate QR for "TEST101"
-# 2. Scan with phone or copy link
-# 3. Connect wallet
-# 4. Enter name: "Test Student"
-# 5. Sign transaction
-# 6. Verify on teacher view
+npm start
+# Server runs on http://localhost:3000
 ```
 
-### Test Certificate
-```bash
-# 1. Upload certificate image
-# 2. Fill details
-# 3. Mint NFT
-# 4. Check AlgoExplorer
-# 5. View on IPFS
-```
+### 3️⃣ Frontend Setup
 
-## 🐛 Troubleshooting
-
-### Backend Won't Start
 ```bash
-# Check if MySQL is running
-# Verify .env credentials
-# Run: npm install
-```
-
-### Frontend Build Errors
-```bash
-# Clear cache
-rm -rf node_modules
+cd frontend
 npm install
 ```
 
-### Database Issues
-```bash
-# Run migrations
-mysql -u root -p trustcampus < migration_add_student_name.sql
+Create `frontend/.env`:
+
+```env
+VITE_API_URL=http://localhost:3000
 ```
 
-### Wallet Connection Failed
-- Install Lute extension
-- Switch to Testnet
-- Refresh page
+Start the frontend:
 
-## 🎓 Use Cases
+```bash
+npm run dev
+# App runs on http://localhost:5173
+```
 
-### Educational Institutions
-- ✅ Automated attendance tracking
-- ✅ Tamper-proof records
-- ✅ Digital certificates
-- ✅ Blockchain verification
+### 4️⃣ Connect Wallet
 
-### Corporate Training
-- ✅ Training attendance
-- ✅ Course completion certificates
-- ✅ Verifiable credentials
-
-### Events & Conferences
-- ✅ Event check-in
-- ✅ Participation certificates
-- ✅ Proof of attendance
-
-## 🔮 Roadmap
-
-### Phase 1 (Completed) ✅
-- [x] Lute wallet integration
-- [x] Smart contract deployment
-- [x] NFT certificate minting
-- [x] Mobile QR attendance
-- [x] Live dashboard
-
-### Phase 2 (Planned)
-- [ ] Geolocation verification
-- [ ] Time-based QR expiry
-- [ ] Attendance analytics
-- [ ] Email notifications
-- [ ] Bulk operations
-
-### Phase 3 (Future)
-- [ ] Mobile app (React Native)
-- [ ] LMS integration
-- [ ] Multi-chain support
-- [ ] DAO governance
-
-## 🤝 Contributing
-
-Contributions welcome! Please:
-1. Fork the repository
-2. Create feature branch
-3. Commit changes
-4. Push to branch
-5. Open pull request
-
-## 📄 License
-
-MIT License - see LICENSE file
-
-## 🙏 Acknowledgments
-
-- Algorand Foundation
-- Lute Wallet Team
-- Pinata IPFS
-- Open source community
-
-## 📞 Support
-
-- Documentation: See `/docs` folder
-- Issues: GitHub Issues
-- Algorand: https://developer.algorand.org
-- Lute: https://docs.lute.app
-
-## 🎉 Success Metrics
-
-After setup, you'll have:
-- ✅ 3 smart contracts on Algorand
-- ✅ Working mobile attendance
-- ✅ NFT certificate minting
-- ✅ Real-time blockchain verification
-- ✅ Production-ready system
+1. Install **Lute Wallet** browser extension
+2. Create/import a wallet on **Algorand TestNet**
+3. Get test ALGO from [TestNet Dispenser](https://bank.testnet.algorand.network/)
+4. Click "Connect" in the navbar
 
 ---
 
-**Built with ❤️ using Algorand blockchain**
+## 📱 Core Pages & Features
 
-**Status**: ✅ Production Ready
+### 🏠 Landing Page (`/`)
+- Hero section with feature highlights
+- Connect wallet CTA
+- Stats and feature cards
 
-All core features implemented and tested. Ready for deployment!
+### 📊 Student Dashboard (`/student`)
+- Attendance count, certificates, wallet balance
+- Digital ID card with wallet address
+- Recent activity feed
+- Quick action links
+
+### 📋 Attendance (`/attendance`)
+**For Teachers:**
+- Set classroom location on interactive map
+- Generate time-limited QR codes (5 min expiry)
+- View live attendance count
+
+**For Students (`/scan`):**
+- Scan QR code
+- Geolocation verification (100m radius)
+- Sign transaction with Lute wallet
+- Optional: Send SMS to parent
+
+### 🏅 Certificates (`/certificates`)
+- View earned certificates
+- Mint new NFT certificates (teachers)
+- IPFS metadata storage via Pinata
+- View on Algo Explorer
+
+### 🏆 Leaderboard (`/leaderboard`)
+- Points-based ranking
+- Daily streak tracking
+- Badge system (Perfect Week, Streak Master, etc.)
+- Personal stats card
+
+### 🤖 AI Reports (`/reports`)
+- Attendance statistics dashboard
+- Generate AI insights (Ollama)
+- Class-specific reports
+- Charts by class and day
+
+### 💬 Feedback (`/feedback`)
+- Submit blockchain-verified feedback
+- Sentiment analysis
+- Tamper-proof verification
+- Public feedback wall
+
+### 🤖 AI ChatBot (floating)
+- Ask about attendance, certificates
+- Powered by Ollama (local LLM)
+- Suggested questions
+
+---
+
+## 🔧 Environment Variables Reference
+
+### Backend (`backend/.env`)
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DB_HOST` | ✅ | MySQL host |
+| `DB_USER` | ✅ | MySQL username |
+| `DB_PASSWORD` | ✅ | MySQL password |
+| `DB_NAME` | ✅ | Database name |
+| `ALGOD_SERVER` | ✅ | Algorand node URL |
+| `PINATA_API_KEY` | ⚠️ | For NFT uploads |
+| `PINATA_SECRET_KEY` | ⚠️ | For NFT uploads |
+| `TWILIO_ACCOUNT_SID` | ❌ | For SMS notifications |
+| `TWILIO_AUTH_TOKEN` | ❌ | For SMS notifications |
+| `TWILIO_PHONE_NUMBER` | ❌ | Twilio sender number |
+| `OLLAMA_HOST` | ❌ | Local Ollama URL |
+| `OLLAMA_MODEL` | ❌ | LLM model name |
+
+### Frontend (`frontend/.env`)
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `VITE_API_URL` | ✅ | Backend API URL |
+
+---
+
+## 🎨 UI/UX Design
+
+The app uses a **Gen-Z inspired** design with:
+
+- **Neon gradients** (Pink → Purple → Cyan)
+- **Glassmorphism** cards with blur effects
+- **Glow effects** on interactive elements
+- **Space Grotesk** typography
+- **Smooth animations** and transitions
+- **Dark theme** optimized for modern aesthetics
+
+---
+
+## 🔗 API Endpoints
+
+### Attendance
+- `POST /api/attendance/mark` - Mark attendance
+- `GET /api/attendance/my?address=` - Get user's attendance
+- `GET /api/attendance/report` - Get all records
+
+### Certificates
+- `POST /api/certificate/mint` - Mint NFT certificate
+- `GET /api/certificate/my?address=` - Get user's certificates
+
+### Reports
+- `GET /api/reports/stats` - Statistics summary
+- `GET /api/reports/ai-insights` - AI-generated insights
+- `GET /api/reports/class/:classId` - Class-specific report
+
+### Feedback
+- `POST /api/feedback/submit` - Submit feedback
+- `GET /api/feedback/all` - Get all feedback
+- `GET /api/feedback/verify/:id` - Verify feedback
+
+### Chat
+- `POST /api/chat/ask` - AI chatbot query
+
+---
+
+## 🧪 Testing
+
+### Manual Testing Checklist
+
+- [ ] Connect Lute wallet on TestNet
+- [ ] Mark attendance via QR scan
+- [ ] Verify attendance on Algo Explorer
+- [ ] Mint a test certificate
+- [ ] Check leaderboard points
+- [ ] Submit feedback
+- [ ] Generate AI report
+
+### Common Issues
+
+| Issue | Solution |
+|-------|----------|
+| Wallet won't connect | Ensure Lute is on TestNet |
+| Transaction fails | Check wallet has test ALGO |
+| QR expired | Generate new QR (5 min limit) |
+| Location denied | Enable browser location |
+| AI not working | Start Ollama: `ollama serve` |
+| SMS not sending | Verify Twilio number in console |
+
+---
+
+## 🚀 Deployment
+
+### Backend (Render/Railway)
+
+1. Push code to GitHub
+2. Connect to Render/Railway
+3. Set environment variables
+4. Deploy from `backend/` directory
+
+### Frontend (Vercel/Netlify)
+
+1. Connect GitHub repo
+2. Set build command: `npm run build`
+3. Set publish directory: `dist`
+4. Add `VITE_API_URL` env variable
+
+---
+
+## 📚 Resources
+
+- [Algorand Developer Portal](https://dev.algorand.co/)
+- [Lute Wallet](https://lute.app/)
+- [Pinata IPFS](https://pinata.cloud/)
+- [Twilio SMS](https://twilio.com/)
+- [Ollama LLM](https://ollama.ai/)
+- [AlgoKit Workshops](https://algorand.co/algokit-workshops)
+- [Algodevs YouTube](https://www.youtube.com/@algodevs)
+
+---
+
+## 👥 Team
+
+Built with ❤️ for the future of education.
+
+---
+
+## 📄 License
+
+MIT License - Feel free to use and modify!
