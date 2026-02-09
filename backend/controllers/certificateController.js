@@ -8,9 +8,16 @@ const path = require('path');
 // Algorand Client
 const algodClient = new algosdk.Algodv2('', process.env.ALGO_ALGOD_SERVER || 'https://testnet-api.4160.nodely.dev', '');
 
-// IPFS Pinata Configuration
-const PINATA_API_KEY = process.env.IPFS_API_KEY;
-const PINATA_SECRET_KEY = process.env.IPFS_SECRET_KEY;
+// IPFS Pinata Configuration (check both naming conventions)
+const PINATA_API_KEY = process.env.PINATA_API_KEY || process.env.IPFS_API_KEY;
+const PINATA_SECRET_KEY = process.env.PINATA_SECRET_KEY || process.env.IPFS_SECRET_KEY;
+
+// Log if Pinata is configured
+if (!PINATA_API_KEY || !PINATA_SECRET_KEY) {
+    console.warn('⚠️ Pinata API keys not configured! Certificate minting will fail.');
+} else {
+    console.log('✓ Pinata IPFS configured');
+}
 
 exports.mintCertificate = async (req, res) => {
     try {
@@ -109,13 +116,17 @@ exports.confirmCertificate = async (req, res) => {
     try {
         const { certificateId, assetId, txId } = req.body;
 
+        console.log('Confirming certificate:', { certificateId, assetId, txId });
+
         await db.execute(
             'UPDATE certificates SET asset_id = ?, tx_id = ?, status = ? WHERE id = ?',
             [assetId, txId, 'CONFIRMED', certificateId]
         );
 
+        console.log('✓ Certificate confirmed:', certificateId);
         res.json({ success: true });
     } catch (error) {
+        console.error('Confirm error:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 };
@@ -123,7 +134,7 @@ exports.confirmCertificate = async (req, res) => {
 exports.getMyCertificates = async (req, res) => {
     try {
         const { address } = req.query;
-        
+
         if (!address) {
             return res.status(400).json({ error: 'Address required' });
         }

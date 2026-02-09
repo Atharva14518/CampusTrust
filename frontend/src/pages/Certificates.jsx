@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Award, ExternalLink, Upload, Loader2, CheckCircle } from 'lucide-react';
+import { Award, ExternalLink, Upload, Loader2, CheckCircle, X, FileText, Calendar, User, Hash, Link2 } from 'lucide-react';
 import algosdk from 'algosdk';
 import { useWallet } from '../context/WalletContext';
 import { API_URL } from '../config';
@@ -14,6 +14,7 @@ const Certificates = () => {
     const [formData, setFormData] = useState({ title: '', course: '', date: '', description: '' });
     const [allCertificates, setAllCertificates] = useState([]);
     const [activeTab, setActiveTab] = useState('my');
+    const [selectedCert, setSelectedCert] = useState(null); // For modal
 
     useEffect(() => {
         if (account) {
@@ -97,29 +98,40 @@ const Certificates = () => {
             // 3. Submit to Algorand
             console.log('Submitting signed transaction to Algorand...');
             const algodClient = new algosdk.Algodv2('', 'https://testnet-api.4160.nodely.dev', '');
-            const { txId } = await algodClient.sendRawTransaction(
+
+            const sendResponse = await algodClient.sendRawTransaction(
                 new Uint8Array(Buffer.from(signedTxns[0], 'base64'))
             ).do();
 
+            // Handle different SDK versions - txid can be in different locations
+            const txId = sendResponse.txid || sendResponse.txId || sendResponse;
+
             console.log('✓ Transaction submitted:', txId);
 
-            // 4. Wait for confirmation
-            await algosdk.waitForConfirmation(algodClient, txId, 4);
+            // 4. Wait for confirmation (increased timeout for network delays)
+            console.log('Waiting for blockchain confirmation (this may take 10-30 seconds)...');
+            await algosdk.waitForConfirmation(algodClient, txId, 20);
 
             // 5. Get asset ID from transaction
             const ptx = await algodClient.pendingTransactionInformation(txId).do();
             const assetId = ptx['asset-index'];
 
+            console.log('✓ Asset created! Asset ID:', assetId);
+
             // 6. Confirm with backend
-            await fetch(`${API_URL}/api/certificate/confirm`, {
+            const confirmResponse = await fetch(`${API_URL}/api/certificate/confirm`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     certificateId: data.certificateId,
-                    assetId,
-                    txId
+                    assetId: String(assetId), // Convert to string for JSON
+                    txId: String(txId)
                 })
             });
+
+            if (!confirmResponse.ok) {
+                console.error('Confirm failed, but NFT was created on blockchain');
+            }
 
             alert(`Certificate Minted! Asset ID: ${assetId}`);
             setFormData({ title: '', course: '', date: '', description: '' });
@@ -133,6 +145,17 @@ const Certificates = () => {
         } finally {
             setUploading(false);
         }
+    };
+
+    // Get IPFS URL for document
+    const getDocumentUrl = (cert) => {
+        if (cert.file_cid) {
+            return `https://gateway.pinata.cloud/ipfs/${cert.file_cid}`;
+        }
+        if (cert.ipfs_hash) {
+            return `https://gateway.pinata.cloud/ipfs/${cert.ipfs_hash}`;
+        }
+        return null;
     };
 
     return (
@@ -241,7 +264,11 @@ const Certificates = () => {
                 {/* Gallery */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {(activeTab === 'my' ? certificates : allCertificates).map((cert) => (
-                        <div key={cert.id} className="group bg-white/5 rounded-2xl border border-white/10 p-6 hover:border-pink-500/50 transition-all">
+                        <div
+                            key={cert.id}
+                            onClick={() => setSelectedCert(cert)}
+                            className="group bg-white/5 rounded-2xl border border-white/10 p-6 hover:border-pink-500/50 transition-all cursor-pointer hover:scale-[1.02]"
+                        >
                             <div className="flex justify-between items-start mb-4">
                                 <Award className="text-yellow-500 w-10 h-10" />
                                 <span className={`text-xs px-2 py-1 rounded ${cert.status === 'CONFIRMED'
@@ -256,28 +283,7 @@ const Certificates = () => {
                             {cert.asset_id && (
                                 <p className="text-xs text-gray-500 mb-4">Asset ID: {cert.asset_id}</p>
                             )}
-                            <div className="flex gap-2">
-                                {cert.asset_id && (
-                                    <a
-                                        href={`https://testnet.algoexplorer.io/asset/${cert.asset_id}`}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="text-pink-400 hover:text-pink-300 text-sm flex items-center gap-1"
-                                    >
-                                        Explorer <ExternalLink size={14} />
-                                    </a>
-                                )}
-                                {cert.metadata_cid && (
-                                    <a
-                                        href={`https://gateway.pinata.cloud/ipfs/${cert.metadata_cid}`}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="text-purple-400 hover:text-purple-300 text-sm flex items-center gap-1"
-                                    >
-                                        IPFS <ExternalLink size={14} />
-                                    </a>
-                                )}
-                            </div>
+                            <p className="text-xs text-pink-400">Click to view details →</p>
                         </div>
                     ))}
                     {(activeTab === 'my' ? certificates : allCertificates).length === 0 && (
@@ -289,8 +295,174 @@ const Certificates = () => {
                     )}
                 </div>
             </div>
+
+            {/* Certificate Detail Modal */}
+            {selectedCert && (
+                <div
+                    className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                    onClick={() => setSelectedCert(null)}
+                >
+                    <div
+                        className="bg-[#1a1f2e] border border-white/10 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Modal Header */}
+                        <div className="flex items-center justify-between p-6 border-b border-white/10">
+                            <div className="flex items-center gap-3">
+                                <Award className="text-yellow-500 w-8 h-8" />
+                                <div>
+                                    <h2 className="text-2xl font-bold">{selectedCert.title}</h2>
+                                    <p className="text-gray-400">{selectedCert.course}</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setSelectedCert(null)}
+                                className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                            >
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {/* Left: Document Preview */}
+                            <div className="bg-black/30 rounded-xl p-4">
+                                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                                    <FileText className="text-pink-400" /> Document Preview
+                                </h3>
+                                {getDocumentUrl(selectedCert) ? (
+                                    <div className="relative">
+                                        <img
+                                            src={getDocumentUrl(selectedCert)}
+                                            alt={selectedCert.title}
+                                            className="w-full rounded-lg max-h-[400px] object-contain bg-gray-900"
+                                            onError={(e) => {
+                                                e.target.style.display = 'none';
+                                                e.target.nextSibling.style.display = 'flex';
+                                            }}
+                                        />
+                                        <div className="hidden flex-col items-center justify-center h-[300px] bg-gray-800 rounded-lg">
+                                            <FileText className="w-16 h-16 text-gray-500 mb-4" />
+                                            <p className="text-gray-400 mb-4">PDF Document</p>
+                                            <a
+                                                href={getDocumentUrl(selectedCert)}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="px-4 py-2 bg-pink-600 rounded-lg hover:bg-pink-700 transition-colors"
+                                            >
+                                                Open PDF
+                                            </a>
+                                        </div>
+                                        <a
+                                            href={getDocumentUrl(selectedCert)}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="mt-4 block text-center py-2 bg-purple-600/20 text-purple-400 rounded-lg hover:bg-purple-600/30 transition-colors"
+                                        >
+                                            View Full Size ↗
+                                        </a>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center h-[300px] bg-gray-800 rounded-lg">
+                                        <FileText className="w-16 h-16 text-gray-500 mb-4" />
+                                        <p className="text-gray-400">No document preview available</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Right: Details */}
+                            <div className="space-y-4">
+                                <h3 className="text-lg font-semibold mb-4">Certificate Details</h3>
+
+                                <div className="bg-black/30 rounded-xl p-4 space-y-3">
+                                    <div className="flex items-center gap-3">
+                                        <User className="text-blue-400 w-5 h-5" />
+                                        <div>
+                                            <p className="text-xs text-gray-400">Owner</p>
+                                            <p className="text-sm font-mono break-all">
+                                                {selectedCert.student_address?.slice(0, 8)}...{selectedCert.student_address?.slice(-8)}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {selectedCert.date && (
+                                        <div className="flex items-center gap-3">
+                                            <Calendar className="text-green-400 w-5 h-5" />
+                                            <div>
+                                                <p className="text-xs text-gray-400">Date</p>
+                                                <p className="text-sm">{new Date(selectedCert.date).toLocaleDateString()}</p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {selectedCert.asset_id && (
+                                        <div className="flex items-center gap-3">
+                                            <Hash className="text-yellow-400 w-5 h-5" />
+                                            <div>
+                                                <p className="text-xs text-gray-400">Asset ID (NFT)</p>
+                                                <p className="text-sm font-mono">{selectedCert.asset_id}</p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {selectedCert.tx_id && (
+                                        <div className="flex items-center gap-3">
+                                            <Link2 className="text-purple-400 w-5 h-5" />
+                                            <div>
+                                                <p className="text-xs text-gray-400">Transaction ID</p>
+                                                <p className="text-sm font-mono break-all">{selectedCert.tx_id?.slice(0, 20)}...</p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="flex items-center gap-3">
+                                        <CheckCircle className={`w-5 h-5 ${selectedCert.status === 'CONFIRMED' ? 'text-green-400' : 'text-yellow-400'}`} />
+                                        <div>
+                                            <p className="text-xs text-gray-400">Status</p>
+                                            <p className={`text-sm font-semibold ${selectedCert.status === 'CONFIRMED' ? 'text-green-400' : 'text-yellow-400'}`}>
+                                                {selectedCert.status === 'CONFIRMED' ? '✓ Blockchain Verified' : '⏳ Pending'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {selectedCert.description && (
+                                    <div className="bg-black/30 rounded-xl p-4">
+                                        <p className="text-xs text-gray-400 mb-2">Description</p>
+                                        <p className="text-sm text-gray-200">{selectedCert.description}</p>
+                                    </div>
+                                )}
+
+                                {/* Action Links */}
+                                <div className="flex flex-wrap gap-3">
+                                    {selectedCert.asset_id && (
+                                        <a
+                                            href={`https://testnet.algoexplorer.io/asset/${selectedCert.asset_id}`}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="flex items-center gap-2 px-4 py-2 bg-pink-600/20 text-pink-400 rounded-lg hover:bg-pink-600/30 transition-colors"
+                                        >
+                                            <ExternalLink size={16} /> View on AlgoExplorer
+                                        </a>
+                                    )}
+                                    {selectedCert.metadata_cid && (
+                                        <a
+                                            href={`https://gateway.pinata.cloud/ipfs/${selectedCert.metadata_cid}`}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="flex items-center gap-2 px-4 py-2 bg-purple-600/20 text-purple-400 rounded-lg hover:bg-purple-600/30 transition-colors"
+                                        >
+                                            <ExternalLink size={16} /> View Metadata (IPFS)
+                                        </a>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
 
 export default Certificates;
+

@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS certificates (
     description TEXT,
     student_address VARCHAR(255) NOT NULL,
     metadata_cid VARCHAR(255),
+    image_cid VARCHAR(255),
     asset_id VARCHAR(255),
     status ENUM('PENDING', 'CONFIRMED') DEFAULT 'PENDING',
     tx_id VARCHAR(255),
