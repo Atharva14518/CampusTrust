@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const path = require('path');
 const db = require('./db');
 const attendanceRoutes = require('./routes/attendance');
 const certificateRoutes = require('./routes/certificate');
@@ -33,8 +34,15 @@ app.use('/api/chat', chatRoutes);
 const notificationRoutes = require('./routes/notifications');
 app.use('/api/notifications', notificationRoutes);
 
-app.get('/', (req, res) => {
-    res.send('TrustCampus API is running');
+// Serve static frontend files in production
+const frontendPath = path.join(__dirname, '../frontend/dist');
+app.use(express.static(frontendPath));
+
+// Handle React Router - serve index.html for all non-API routes
+app.get('*', (req, res) => {
+    if (!req.path.startsWith('/api')) {
+        res.sendFile(path.join(frontendPath, 'index.html'));
+    }
 });
 
 app.listen(PORT, () => {

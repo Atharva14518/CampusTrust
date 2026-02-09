@@ -1,0 +1,37 @@
+# Render Blueprint for TrustCampus
+# Deploy both frontend and backend as a single service
+
+services:
+  - type: web
+    name: campustrust
+    env: node
+    plan: free
+    buildCommand: cd frontend && npm install && npm run build && cd ../backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DB_HOST
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: ALGOD_SERVER
+        value: https://testnet-api.4160.nodely.dev
+      - key: PINATA_API_KEY
+        sync: false
+      - key: PINATA_SECRET_KEY
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_PHONE_NUMBER
+        sync: false
+      - key: OLLAMA_HOST
+        sync: false
+      - key: OLLAMA_MODEL
+        value: gemma:2b
