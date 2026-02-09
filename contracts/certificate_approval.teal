@@ -1,0 +1,77 @@
+#pragma version 6
+txn ApplicationID
+int 0
+==
+bnz main_l12
+txn OnCompletion
+int NoOp
+==
+bnz main_l4
+txn OnCompletion
+int OptIn
+==
+bnz main_l3
+txn OnCompletion
+int DeleteApplication
+==
+bnz main_l11
+txn OnCompletion
+int UpdateApplication
+==
+bnz main_l10
+err
+main_l3:
+int 1
+return
+main_l4:
+itxn_begin
+int acfg
+itxn_field TypeEnum
+int 1
+itxn_field ConfigAssetTotal
+int 0
+itxn_field ConfigAssetDecimals
+int 0
+itxn_field ConfigAssetDefaultFrozen
+byte "TrustCampus Cert"
+itxn_field ConfigAssetName
+byte "TCC"
+itxn_field ConfigAssetUnitName
+byte "ipfs://"
+txn ApplicationArgs 1
+concat
+itxn_field ConfigAssetURL
+global CurrentApplicationAddress
+itxn_field ConfigAssetManager
+global CurrentApplicationAddress
+itxn_field ConfigAssetReserve
+global CurrentApplicationAddress
+itxn_field ConfigAssetFreeze
+global CurrentApplicationAddress
+itxn_field ConfigAssetClawback
+itxn_submit
+itxn_begin
+int axfer
+itxn_field TypeEnum
+itxn CreatedAssetID
+itxn_field XferAsset
+int 1
+itxn_field AssetAmount
+txn ApplicationArgs 0
+itxn_field AssetReceiver
+itxn_submit
+int 1
+return
+main_l10:
+txn Sender
+global CreatorAddress
+==
+return
+main_l11:
+txn Sender
+global CreatorAddress
+==
+return
+main_l12:
+int 1
+return

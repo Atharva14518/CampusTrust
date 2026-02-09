@@ -1,0 +1,35 @@
+#pragma version 6
+txn ApplicationID
+int 0
+==
+bnz main_l6
+txn OnCompletion
+int NoOp
+==
+bnz main_l4
+txn OnCompletion
+int OptIn
+==
+bnz main_l3
+err
+main_l3:
+int 1
+return
+main_l4:
+txn NumAppArgs
+int 3
+==
+assert
+byte "FEEDBACK:"
+txn ApplicationArgs 0
+concat
+byte ":"
+concat
+txn ApplicationArgs 1
+concat
+log
+int 1
+return
+main_l6:
+int 1
+return
