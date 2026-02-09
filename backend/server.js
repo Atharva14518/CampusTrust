@@ -39,7 +39,7 @@ const frontendPath = path.join(__dirname, '../frontend/dist');
 app.use(express.static(frontendPath));
 
 // Handle React Router - serve index.html for all non-API routes
-app.get('*', (req, res) => {
+app.get('/{*path}', (req, res) => {
     if (!req.path.startsWith('/api')) {
         res.sendFile(path.join(frontendPath, 'index.html'));
     }
