@@ -184,6 +184,11 @@ export const WalletProvider = ({ children }) => {
         }
 
         if (walletType === 'pera') {
+            // Check if peraWallet is initialized
+            if (!peraWallet) {
+                throw new Error('Pera Wallet not initialized. Please reconnect.');
+            }
+
             // Pera Wallet expects an array of base64-encoded transactions (without wrapper objects)
             // Convert from Lute format [{txn: base64}] to Pera format [base64]
             const txnArray = Array.isArray(txns) ? txns : [txns];
