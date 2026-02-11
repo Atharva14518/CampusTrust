@@ -12,5 +12,20 @@ export default defineConfig({
   preview: {
     host: '0.0.0.0',
     port: 5173,
-  }
+  },
+  define: {
+    global: 'globalThis',
+  },
+  resolve: {
+    alias: {
+      buffer: 'buffer',
+    },
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      define: {
+        global: 'globalThis',
+      },
+    },
+  },
 })
