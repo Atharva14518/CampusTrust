@@ -39,8 +39,11 @@ export const WalletProvider = ({ children }) => {
             }
         };
 
-        // Initialize Pera Wallet
-        const pera = new PeraWalletConnect();
+        // Initialize Pera Wallet with WalletConnect options for mobile
+        const pera = new PeraWalletConnect({
+            chainId: 416002, // Algorand TestNet chain ID (416001 for MainNet)
+            shouldShowSignTxnToast: true,
+        });
         setPeraWallet(pera);
 
         initAlgorand();
@@ -100,18 +103,35 @@ export const WalletProvider = ({ children }) => {
             throw new Error('Pera Wallet not initialized');
         }
 
-        const accounts = await peraWallet.connect();
+        try {
+            const accounts = await peraWallet.connect();
 
-        if (!accounts || accounts.length === 0) {
-            throw new Error('No accounts returned from Pera Wallet');
+            if (!accounts || accounts.length === 0) {
+                throw new Error('No accounts returned from Pera Wallet');
+            }
+
+            const address = accounts[0];
+            console.log('✓ Connected via Pera:', address.substring(0, 8) + '...');
+            setAccount(address);
+            setWalletType('pera');
+            localStorage.setItem('walletAddress', address);
+            localStorage.setItem('walletType', 'pera');
+
+            // Set up disconnect listener
+            peraWallet.connector?.on('disconnect', () => {
+                console.log('Pera Wallet disconnected');
+                disconnectWallet();
+            });
+        } catch (error) {
+            console.error('Pera connection error:', error);
+            // Provide more helpful error messages
+            if (error.message?.includes('User rejected')) {
+                throw new Error('Connection rejected in Pera Wallet app');
+            } else if (error.message?.includes('session')) {
+                throw new Error('WalletConnect session failed.\n\nTry:\n1. Close Pera app completely\n2. Reconnect and scan QR again');
+            }
+            throw error;
         }
-
-        const address = accounts[0];
-        console.log('✓ Connected via Pera:', address.substring(0, 8) + '...');
-        setAccount(address);
-        setWalletType('pera');
-        localStorage.setItem('walletAddress', address);
-        localStorage.setItem('walletType', 'pera');
     };
 
     const connectWallet = async (type = 'lute') => {
