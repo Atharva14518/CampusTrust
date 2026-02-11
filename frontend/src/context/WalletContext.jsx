@@ -164,11 +164,20 @@ export const WalletProvider = ({ children }) => {
         }
 
         if (walletType === 'pera') {
-            // Pera Wallet signing
-            const signedTxns = await peraWallet.signTransaction([txns]);
+            // Pera Wallet expects an array of base64-encoded transactions (without wrapper objects)
+            // Convert from Lute format [{txn: base64}] to Pera format [base64]
+            const txnArray = Array.isArray(txns) ? txns : [txns];
+            const base64Txns = txnArray.map(t => {
+                // If it's already in Lute format {txn: base64}, extract the base64
+                if (t.txn) return t.txn;
+                // Otherwise it's already base64
+                return t;
+            });
+
+            const signedTxns = await peraWallet.signTransaction([base64Txns]);
             return signedTxns;
         } else if (walletType === 'lute') {
-            // Lute Wallet signing
+            // Lute Wallet expects array of {txn: base64} objects
             if (!lute) {
                 throw new Error('Lute wallet not initialized');
             }
