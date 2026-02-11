@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import LuteConnect from 'lute-connect';
+import { PeraWalletConnect } from '@perawallet/connect';
 import algosdk from 'algosdk';
 
 const WalletContext = createContext();
@@ -12,11 +13,13 @@ const ALGOD_TOKEN = '';
 export const WalletProvider = ({ children }) => {
     const [account, setAccount] = useState(null);
     const [lute, setLute] = useState(null);
+    const [peraWallet, setPeraWallet] = useState(null);
+    const [walletType, setWalletType] = useState(null); // 'lute' or 'pera'
     const [isConnecting, setIsConnecting] = useState(false);
     const [genesisID, setGenesisID] = useState(null);
     const [algodClient, setAlgodClient] = useState(null);
 
-    // Initialize Algorand client and fetch genesis ID on mount
+    // Initialize Algorand client and Pera Wallet on mount
     useEffect(() => {
         const initAlgorand = async () => {
             try {
@@ -36,87 +39,144 @@ export const WalletProvider = ({ children }) => {
             }
         };
 
+        // Initialize Pera Wallet
+        const pera = new PeraWalletConnect();
+        setPeraWallet(pera);
+
         initAlgorand();
     }, []);
 
-    const connectWallet = async () => {
+    const connectLuteWallet = async () => {
+        // Wait for extension to be available
+        let attempts = 0;
+        while (!window.lute && attempts < 20) {
+            await new Promise(resolve => setTimeout(resolve, 200));
+            attempts++;
+        }
+
+        if (!window.lute) {
+            throw new Error(
+                'Lute extension not detected.\\n\\n' +
+                'Please:\\n' +
+                '1. Install Lute wallet from https://lute.app\\n' +
+                '2. Refresh this page\\n' +
+                '3. Unlock your wallet'
+            );
+        }
+
+        console.log('Lute extension detected');
+        console.log('Using Genesis ID:', genesisID || 'testnet-v1.0');
+
+        // Create LuteConnect instance
+        const luteInstance = new LuteConnect('TrustCampus');
+        setLute(luteInstance);
+
+        // Connect with genesis ID
+        const networkGenesisID = genesisID || 'testnet-v1.0';
+        console.log('Connecting with genesisID:', networkGenesisID);
+
+        const addresses = await luteInstance.connect(networkGenesisID);
+        console.log('Received addresses:', addresses);
+
+        if (!addresses || addresses.length === 0) {
+            throw new Error('No accounts returned. Please unlock your wallet and ensure you have an account.');
+        }
+
+        const address = addresses[0];
+
+        if (!address || address.length !== 58) {
+            throw new Error('Invalid address format received from wallet.');
+        }
+
+        console.log('✓ Connected via Lute:', address.substring(0, 8) + '...');
+        setAccount(address);
+        setWalletType('lute');
+        localStorage.setItem('walletAddress', address);
+        localStorage.setItem('walletType', 'lute');
+    };
+
+    const connectPeraWallet = async () => {
+        if (!peraWallet) {
+            throw new Error('Pera Wallet not initialized');
+        }
+
+        const accounts = await peraWallet.connect();
+
+        if (!accounts || accounts.length === 0) {
+            throw new Error('No accounts returned from Pera Wallet');
+        }
+
+        const address = accounts[0];
+        console.log('✓ Connected via Pera:', address.substring(0, 8) + '...');
+        setAccount(address);
+        setWalletType('pera');
+        localStorage.setItem('walletAddress', address);
+        localStorage.setItem('walletType', 'pera');
+    };
+
+    const connectWallet = async (type = 'lute') => {
         if (isConnecting) return;
 
         setIsConnecting(true);
         try {
-            // Wait for extension to be available
-            let attempts = 0;
-            while (!window.lute && attempts < 20) {
-                await new Promise(resolve => setTimeout(resolve, 200));
-                attempts++;
+            if (type === 'pera') {
+                await connectPeraWallet();
+            } else {
+                await connectLuteWallet();
             }
-
-            if (!window.lute) {
-                throw new Error(
-                    'Lute extension not detected.\n\n' +
-                    'Please:\n' +
-                    '1. Install Lute wallet from https://lute.app\n' +
-                    '2. Refresh this page\n' +
-                    '3. Unlock your wallet'
-                );
-            }
-
-            console.log('Lute extension detected');
-            console.log('Using Genesis ID:', genesisID || 'testnet-v1.0');
-
-            // Create LuteConnect instance
-            const luteInstance = new LuteConnect('TrustCampus');
-            setLute(luteInstance);
-
-            // Connect with genesis ID (required by lute-connect)
-            const networkGenesisID = genesisID || 'testnet-v1.0';
-            console.log('Connecting with genesisID:', networkGenesisID);
-
-            const addresses = await luteInstance.connect(networkGenesisID);
-            console.log('Received addresses:', addresses);
-
-            if (!addresses || addresses.length === 0) {
-                throw new Error('No accounts returned. Please unlock your wallet and ensure you have an account.');
-            }
-
-            const address = addresses[0];
-
-            if (!address || address.length !== 58) {
-                throw new Error('Invalid address format received from wallet.');
-            }
-
-            console.log('✓ Connected:', address.substring(0, 8) + '...');
-            setAccount(address);
-            localStorage.setItem('walletAddress', address);
-
         } catch (error) {
             console.error('Connection failed:', error);
 
             let errorMsg = error.message || 'Unknown error occurred';
 
             if (errorMsg.includes('rejected') || errorMsg.includes('denied') || errorMsg.includes('cancelled')) {
-                errorMsg = 'Connection was rejected. Please approve the connection in your Lute wallet.';
+                errorMsg = 'Connection was rejected. Please approve the connection in your wallet.';
             } else if (errorMsg.includes('Invalid Network')) {
-                errorMsg = 'Network mismatch.\n\nPlease ensure your Lute wallet is set to TestNet:\n' +
-                    '1. Open Lute extension\n' +
-                    '2. Go to Settings\n' +
-                    '3. Select "TestNet"\n' +
-                    '4. Refresh this page';
-            } else if (errorMsg.includes('not detected')) {
-                errorMsg = 'Lute wallet not detected.\n\nPlease install from: https://lute.app';
+                errorMsg = 'Network mismatch.\\n\\nPlease ensure your wallet is set to TestNet';
+            } else if (errorMsg.includes('not detected') && type === 'lute') {
+                errorMsg = 'Lute wallet not detected.\\n\\nPlease install from: https://lute.app';
             }
 
-            alert('Connection Failed:\n\n' + errorMsg);
+            alert('Connection Failed:\\n\\n' + errorMsg);
+            throw error;
         } finally {
             setIsConnecting(false);
         }
     };
 
-    const disconnectWallet = () => {
+    const disconnectWallet = async () => {
+        if (walletType === 'pera' && peraWallet) {
+            await peraWallet.disconnect();
+        }
+
         setAccount(null);
         setLute(null);
+        setWalletType(null);
         localStorage.removeItem('walletAddress');
+        localStorage.removeItem('walletType');
         console.log('✓ Disconnected');
+    };
+
+    // Sign transactions based on wallet type
+    const signTransactions = async (txns) => {
+        if (!account) {
+            throw new Error('No wallet connected');
+        }
+
+        if (walletType === 'pera') {
+            // Pera Wallet signing
+            const signedTxns = await peraWallet.signTransaction([txns]);
+            return signedTxns;
+        } else if (walletType === 'lute') {
+            // Lute Wallet signing
+            if (!lute) {
+                throw new Error('Lute wallet not initialized');
+            }
+            const signedTxns = await lute.signTxns(txns);
+            return signedTxns;
+        } else {
+            throw new Error('Unknown wallet type');
+        }
     };
 
     // Verify wallet connection is ready for signing
@@ -124,7 +184,7 @@ export const WalletProvider = ({ children }) => {
         if (!account) {
             throw new Error('No wallet account connected. Please connect your wallet first.');
         }
-        if (!lute) {
+        if (walletType === 'lute' && !lute) {
             const luteInstance = new LuteConnect('TrustCampus');
             setLute(luteInstance);
         }
@@ -142,26 +202,44 @@ export const WalletProvider = ({ children }) => {
     // Restore session on mount
     useEffect(() => {
         const saved = localStorage.getItem('walletAddress');
-        if (saved && saved.length === 58) {
-            console.log('Restoring session:', saved.substring(0, 8) + '...');
-            setAccount(saved);
+        const savedType = localStorage.getItem('walletType');
 
-            // Re-create lute instance for signing
-            const luteInstance = new LuteConnect('TrustCampus');
-            setLute(luteInstance);
+        if (saved && saved.length === 58 && savedType) {
+            console.log('Restoring', savedType, 'session:', saved.substring(0, 8) + '...');
+            setAccount(saved);
+            setWalletType(savedType);
+
+            if (savedType === 'lute') {
+                const luteInstance = new LuteConnect('TrustCampus');
+                setLute(luteInstance);
+            }
+            // Pera Wallet will auto-reconnect via its own mechanism
         }
     }, []);
+
+    // Listen for Pera Wallet disconnect events
+    useEffect(() => {
+        if (peraWallet) {
+            peraWallet.connector?.on('disconnect', () => {
+                console.log('Pera Wallet disconnected');
+                disconnectWallet();
+            });
+        }
+    }, [peraWallet]);
 
     return (
         <WalletContext.Provider value={{
             account,
             lute,
+            peraWallet,
+            walletType,
             connectWallet,
             disconnectWallet,
             isConnecting,
             verifyConnection,
             getAlgodClient,
-            genesisID
+            genesisID,
+            signTransactions
         }}>
             {children}
         </WalletContext.Provider>
