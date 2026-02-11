@@ -10,7 +10,7 @@ import {
 const ALGOD_SERVER = 'https://testnet-api.4160.nodely.dev';
 
 const Feedback = () => {
-    const { account, lute, connectWallet, isConnecting } = useWallet();
+    const { account, connectWallet, isConnecting, signTransactions } = useWallet();
     const [feedbackText, setFeedbackText] = useState('');
     const [classId, setClassId] = useState('');
     const [teacherId, setTeacherId] = useState('');
@@ -81,12 +81,12 @@ const Feedback = () => {
             const encodedTxn = algosdk.encodeUnsignedTransaction(txn);
             const txnB64 = Buffer.from(encodedTxn).toString('base64');
 
-            console.log('Requesting signature from Lute...');
+            console.log('Requesting signature from wallet...');
 
-            // Sign with Lute wallet
+            // Sign with wallet (Lute or Pera)
             let signedTxnB64;
             try {
-                const signResult = await lute.signTxns([
+                const signResult = await signTransactions([
                     { txn: txnB64 }
                 ]);
                 signedTxnB64 = signResult[0];

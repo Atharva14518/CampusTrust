@@ -49,7 +49,7 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
 const AttendanceScan = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const { account, lute, connectWallet, verifyConnection } = useWallet();
+    const { account, connectWallet, verifyConnection, signTransactions, walletType } = useWallet();
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState('');
@@ -204,12 +204,6 @@ const AttendanceScan = () => {
                 return;
             }
 
-            if (!lute) {
-                setError('Wallet not initialized. Please refresh.');
-                setLoading(false);
-                return;
-            }
-
             const algodClient = new algosdk.Algodv2('', 'https://testnet-api.4160.nodely.dev', '');
             const params = await algodClient.getTransactionParams().do();
 
@@ -226,8 +220,9 @@ const AttendanceScan = () => {
                 suggestedParams: params
             });
 
+            // Use universal signTransactions that works for both Lute and Pera
             const txnB64 = Buffer.from(algosdk.encodeUnsignedTransaction(txn)).toString('base64');
-            const signedTxns = await lute.signTxns([{ txn: txnB64 }]);
+            const signedTxns = await signTransactions([{ txn: txnB64 }]);
 
             if (!signedTxns || !signedTxns[0]) {
                 throw new Error('Signing cancelled');

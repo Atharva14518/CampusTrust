@@ -7,7 +7,7 @@ import { Buffer } from 'buffer';
 window.Buffer = Buffer;
 
 const Certificates = () => {
-    const { account, lute, verifyConnection } = useWallet();
+    const { account, verifyConnection, signTransactions } = useWallet();
     const [certificates, setCertificates] = useState([]);
     const [uploading, setUploading] = useState(false);
     const [file, setFile] = useState(null);
@@ -53,7 +53,7 @@ const Certificates = () => {
 
     const handleMint = async (e) => {
         e.preventDefault();
-        if (!account || !file || !lute) {
+        if (!account || !file) {
             alert('Please connect wallet and select a file');
             return;
         }
@@ -84,13 +84,13 @@ const Certificates = () => {
             console.log('SIGNING NFT CERTIFICATE TRANSACTION');
             console.log('Transaction type: Asset Creation (NFT)');
             console.log('Creator:', account);
-            console.log('Requesting signature from Lute wallet...');
+            console.log('Requesting signature from wallet...');
             console.log('═══════════════════════════════════════');
 
-            const signedTxns = await lute.signTxns([{ txn: data.txn }]);
+            const signedTxns = await signTransactions([{ txn: data.txn }]);
 
             if (!signedTxns || !signedTxns[0]) {
-                throw new Error('Transaction signing failed. Please approve the transaction in Lute wallet.');
+                throw new Error('Transaction signing failed. Please approve the transaction in your wallet.');
             }
 
             console.log('✓ Transaction signed successfully!');
