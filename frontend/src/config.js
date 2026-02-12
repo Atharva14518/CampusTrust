@@ -12,11 +12,11 @@ const getApiUrl = () => {
 
     // If accessing via IP address (mobile), use that IP
     if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
-        return `http://${hostname}:3000`;
+        return `http://${hostname}:3001`;
     }
 
     // Default to localhost
-    return 'http://localhost:3000';
+    return 'http://localhost:3001';
 };
 
 export const API_URL = getApiUrl();

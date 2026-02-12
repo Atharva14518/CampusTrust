@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Wallet, LogOut, Sparkles, Trophy, MessageSquare, QrCode, Award, LayoutDashboard, FileText } from 'lucide-react';
+import { Wallet, LogOut, Sparkles, Trophy, MessageSquare, QrCode, Award, LayoutDashboard, FileText, Vote, Users } from 'lucide-react';
 import { useWallet } from '../context/WalletContext';
 import WalletSelector from './WalletSelector';
 
@@ -11,14 +11,41 @@ const Navbar = () => {
 
     const isActive = (path) => location.pathname === path;
 
-    const navLinks = [
+    const role = localStorage.getItem('userRole') || 'STUDENT';
+
+    const studentLinks = [
         { path: '/student', label: 'Dashboard', icon: LayoutDashboard },
+        { path: '/certificates', label: 'Certificates', icon: Award },
+        { path: '/leaderboard', label: 'Leaderboard', icon: Trophy },
+        { path: '/reports', label: 'Reports', icon: FileText },
+        { path: '/feedback', label: 'Feedback', icon: MessageSquare },
+        { path: '/voting', label: 'Vote', icon: Vote },
+    ];
+
+    const teacherLinks = [
+        { path: '/teacher', label: 'Dashboard', icon: LayoutDashboard },
         { path: '/attendance', label: 'Attendance', icon: QrCode },
         { path: '/certificates', label: 'Certificates', icon: Award },
         { path: '/leaderboard', label: 'Leaderboard', icon: Trophy },
         { path: '/reports', label: 'Reports', icon: FileText },
         { path: '/feedback', label: 'Feedback', icon: MessageSquare },
+        { path: '/voting', label: 'Proposals', icon: Vote },
     ];
+
+    const hodLinks = [
+        { path: '/hod', label: 'Dashboard', icon: LayoutDashboard },
+        { path: '/attendance', label: 'Attendance', icon: QrCode },
+        { path: '/certificates', label: 'Certificates', icon: Award },
+        { path: '/leaderboard', label: 'Leaderboard', icon: Trophy },
+        { path: '/reports', label: 'Reports', icon: FileText },
+        { path: '/feedback', label: 'Feedback', icon: MessageSquare },
+        { path: '/voting', label: 'Proposals', icon: Vote },
+    ];
+
+    let navLinks;
+    if (role === 'HOD') navLinks = hodLinks;
+    else if (role === 'TEACHER') navLinks = teacherLinks;
+    else navLinks = studentLinks;
 
     const handleConnectClick = () => {
         setShowWalletSelector(true);
@@ -32,12 +59,25 @@ const Navbar = () => {
         }
     };
 
+    const handleDisconnect = () => {
+        localStorage.removeItem('userRole');
+        disconnectWallet();
+    };
+
     const getWalletBadge = () => {
         if (walletType === 'pera') return '🥥 Pera';
         if (walletType === 'defly') return '🦅 Defly';
         if (walletType === 'lute') return '🦎 Lute';
         return '';
     };
+
+    const getRoleBadge = () => {
+        if (role === 'HOD') return { label: 'HOD', color: 'bg-amber-500/20 text-amber-400 border-amber-500/30' };
+        if (role === 'TEACHER') return { label: 'Teacher', color: 'bg-purple-500/20 text-purple-400 border-purple-500/30' };
+        return { label: 'Student', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' };
+    };
+
+    const roleBadge = getRoleBadge();
 
     return (
         <>
@@ -55,26 +95,32 @@ const Navbar = () => {
                         </Link>
 
                         {/* Nav Links - Desktop */}
-                        <div className="hidden lg:flex items-center gap-1 bg-white/5 rounded-xl p-1">
-                            {navLinks.map(({ path, label, icon: Icon }) => (
-                                <Link
-                                    key={path}
-                                    to={path}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActive(path)
-                                        ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-lg'
-                                        : 'text-gray-400 hover:text-white hover:bg-white/10'
-                                        }`}
-                                >
-                                    <Icon size={16} />
-                                    <span>{label}</span>
-                                </Link>
-                            ))}
-                        </div>
+                        {account && (
+                            <div className="hidden lg:flex items-center gap-1 bg-white/5 rounded-xl p-1">
+                                {navLinks.map(({ path, label, icon: Icon }) => (
+                                    <Link
+                                        key={path}
+                                        to={path}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActive(path)
+                                            ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-lg'
+                                            : 'text-gray-400 hover:text-white hover:bg-white/10'
+                                            }`}
+                                    >
+                                        <Icon size={16} />
+                                        <span>{label}</span>
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
 
                         {/* Wallet Section */}
                         <div className="flex items-center gap-3">
                             {account ? (
                                 <>
+                                    {/* Role Badge */}
+                                    <span className={`hidden md:inline-block text-xs font-bold px-3 py-1 rounded-full border ${roleBadge.color}`}>
+                                        {roleBadge.label}
+                                    </span>
                                     <div className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10">
                                         <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
                                         <span className="text-xs text-gray-400">{getWalletBadge()}</span>
@@ -83,7 +129,7 @@ const Navbar = () => {
                                         </span>
                                     </div>
                                     <button
-                                        onClick={disconnectWallet}
+                                        onClick={handleDisconnect}
                                         className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 hover:border-red-500/30 transition-all text-sm font-medium"
                                     >
                                         <LogOut size={16} />
@@ -91,36 +137,38 @@ const Navbar = () => {
                                     </button>
                                 </>
                             ) : (
-                                <button
-                                    onClick={handleConnectClick}
+                                <Link
+                                    to="/login"
                                     className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold text-sm transition-all hover:scale-105 shadow-lg shadow-pink-500/20"
                                 >
                                     <Wallet size={18} />
-                                    <span>Connect</span>
-                                </button>
+                                    <span>Login</span>
+                                </Link>
                             )}
                         </div>
                     </div>
                 </div>
 
                 {/* Mobile Nav */}
-                <div className="lg:hidden border-t border-white/5 px-4 py-2 overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                    <div className="flex gap-1 min-w-max">
-                        {navLinks.map(({ path, label, icon: Icon }) => (
-                            <Link
-                                key={path}
-                                to={path}
-                                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${isActive(path)
-                                    ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white'
-                                    : 'text-gray-400 hover:text-white bg-white/5'
-                                    }`}
-                            >
-                                <Icon size={14} />
-                                <span>{label}</span>
-                            </Link>
-                        ))}
+                {account && (
+                    <div className="lg:hidden border-t border-white/5 px-4 py-2 overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                        <div className="flex gap-1 min-w-max">
+                            {navLinks.map(({ path, label, icon: Icon }) => (
+                                <Link
+                                    key={path}
+                                    to={path}
+                                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${isActive(path)
+                                        ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white'
+                                        : 'text-gray-400 hover:text-white bg-white/5'
+                                        }`}
+                                >
+                                    <Icon size={14} />
+                                    <span>{label}</span>
+                                </Link>
+                            ))}
+                        </div>
                     </div>
-                </div>
+                )}
             </nav>
 
             {/* Wallet Selector Modal */}

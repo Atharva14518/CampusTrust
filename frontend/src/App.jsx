@@ -15,6 +15,8 @@ import SigningTest from './pages/SigningTest';
 import AIReports from './pages/AIReports';
 import Feedback from './pages/Feedback';
 import Leaderboard from './pages/Leaderboard';
+import TeacherDashboard from './pages/TeacherDashboard';
+import Voting from './pages/Voting';
 import { WalletProvider } from './context/WalletContext';
 
 function App() {
@@ -27,6 +29,8 @@ function App() {
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/student" element={<StudentDashboard />} />
+            <Route path="/teacher" element={<TeacherDashboard />} />
+            <Route path="/hod" element={<Admin />} />
             <Route path="/attendance" element={<Attendance />} />
             <Route path="/scan" element={<AttendanceScan />} />
             <Route path="/certificates" element={<Certificates />} />
@@ -37,6 +41,7 @@ function App() {
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/wallet-test" element={<WalletTest />} />
             <Route path="/signing-test" element={<SigningTest />} />
+            <Route path="/voting" element={<Voting />} />
           </Routes>
           <ChatBot />
         </div>

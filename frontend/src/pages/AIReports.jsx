@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { API_URL } from '../config';
 import { useWallet } from '../context/WalletContext';
-import { BarChart3, TrendingUp, Users, AlertTriangle, RefreshCw, Download, Brain } from 'lucide-react';
+import { BarChart3, TrendingUp, Users, AlertTriangle, RefreshCw, Brain, Clock, Award, CheckCircle } from 'lucide-react';
 
 const AIReports = () => {
     const { account } = useWallet();
+    const role = localStorage.getItem('userRole') || 'STUDENT';
     const [insights, setInsights] = useState(null);
     const [stats, setStats] = useState(null);
+    const [studentData, setStudentData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [selectedClass, setSelectedClass] = useState('');
@@ -14,9 +16,62 @@ const AIReports = () => {
     const [classLoading, setClassLoading] = useState(false);
 
     useEffect(() => {
-        fetchStats();
-    }, []);
+        if (role === 'STUDENT') {
+            fetchStudentReport();
+        } else {
+            fetchStats();
+        }
+    }, [account, role]);
 
+    // STUDENT: Fetch only their own data
+    const fetchStudentReport = async () => {
+        if (!account) return;
+        try {
+            setLoading(true);
+            // Fetch student's attendance
+            const attRes = await fetch(`${API_URL}/api/attendance/my?address=${account}`);
+            const attData = await attRes.json();
+
+            // Fetch student's certificates
+            const certRes = await fetch(`${API_URL}/api/certificate/my?address=${account}`);
+            const certData = await certRes.json();
+
+            const attendance = attData.success ? attData.attendance || [] : [];
+            const certificates = certData.success ? certData.certificates || [] : [];
+
+            // Compute individual stats
+            const classesAttended = new Set(attendance.map(a => a.class_id)).size;
+            const totalRecords = attendance.length;
+
+            // Group by class
+            const classCounts = {};
+            attendance.forEach(a => {
+                classCounts[a.class_id] = (classCounts[a.class_id] || 0) + 1;
+            });
+
+            // Recent activity (last 7 days)
+            const weekAgo = new Date();
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            const recentCount = attendance.filter(a => new Date(a.timestamp) >= weekAgo).length;
+
+            setStudentData({
+                totalRecords,
+                classesAttended,
+                certificateCount: certificates.length,
+                classCounts,
+                recentCount,
+                attendance,
+                certificates
+            });
+        } catch (err) {
+            console.error('Failed to fetch student data:', err);
+            setError('Failed to load your report');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // TEACHER/HOD: Fetch global stats
     const fetchStats = async () => {
         try {
             setLoading(true);
@@ -52,7 +107,6 @@ const AIReports = () => {
 
     const fetchClassReport = async () => {
         if (!selectedClass) return;
-
         try {
             setClassLoading(true);
             const response = await fetch(`${API_URL}/api/reports/class/${selectedClass}`);
@@ -67,6 +121,151 @@ const AIReports = () => {
         }
     };
 
+    // ==================== STUDENT VIEW ====================
+    if (role === 'STUDENT') {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 pt-24 px-6 pb-10">
+                <div className="max-w-5xl mx-auto">
+                    {/* Header */}
+                    <div className="flex items-center gap-4 mb-8">
+                        <div className="p-3 bg-purple-500/20 rounded-xl">
+                            <Brain className="w-8 h-8 text-purple-400" />
+                        </div>
+                        <div>
+                            <h1 className="text-3xl font-bold text-white">My Report</h1>
+                            <p className="text-gray-400">Your personal attendance & achievement summary</p>
+                        </div>
+                    </div>
+
+                    {loading ? (
+                        <div className="text-center py-20 text-gray-400">
+                            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4" />
+                            Loading your report...
+                        </div>
+                    ) : !account ? (
+                        <div className="text-center py-20 text-gray-400">
+                            Please connect your wallet to view your report.
+                        </div>
+                    ) : studentData ? (
+                        <>
+                            {/* Student Stats Cards */}
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                                <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/10 backdrop-blur-lg rounded-2xl p-6 border border-blue-500/20">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-blue-300 text-sm">My Attendance</p>
+                                            <p className="text-3xl font-bold text-white">{studentData.totalRecords}</p>
+                                        </div>
+                                        <Clock className="w-10 h-10 text-blue-400 opacity-50" />
+                                    </div>
+                                </div>
+                                <div className="bg-gradient-to-br from-green-500/20 to-green-600/10 backdrop-blur-lg rounded-2xl p-6 border border-green-500/20">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-green-300 text-sm">Classes Attended</p>
+                                            <p className="text-3xl font-bold text-white">{studentData.classesAttended}</p>
+                                        </div>
+                                        <CheckCircle className="w-10 h-10 text-green-400 opacity-50" />
+                                    </div>
+                                </div>
+                                <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/10 backdrop-blur-lg rounded-2xl p-6 border border-purple-500/20">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-purple-300 text-sm">Certificates</p>
+                                            <p className="text-3xl font-bold text-white">{studentData.certificateCount || 0}</p>
+                                        </div>
+                                        <Award className="w-10 h-10 text-purple-400 opacity-50" />
+                                    </div>
+                                </div>
+                                <div className="bg-gradient-to-br from-orange-500/20 to-orange-600/10 backdrop-blur-lg rounded-2xl p-6 border border-orange-500/20">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-orange-300 text-sm">This Week</p>
+                                            <p className="text-3xl font-bold text-white">{studentData.recentCount}</p>
+                                        </div>
+                                        <TrendingUp className="w-10 h-10 text-orange-400 opacity-50" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* My Attendance by Class */}
+                            <div className="bg-white/5 backdrop-blur-lg rounded-2xl p-6 border border-white/10 mb-8">
+                                <h3 className="text-xl font-semibold text-white mb-4">My Attendance by Class</h3>
+                                {Object.keys(studentData.classCounts).length === 0 ? (
+                                    <p className="text-gray-400 text-center py-6">No attendance records yet. Scan your teacher's QR code to get started!</p>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {Object.entries(studentData.classCounts).map(([classId, count]) => (
+                                            <div key={classId} className="flex items-center gap-3">
+                                                <span className="text-gray-300 w-24 truncate font-mono">{classId}</span>
+                                                <div className="flex-1 bg-gray-700 rounded-full h-4 overflow-hidden">
+                                                    <div
+                                                        className="bg-gradient-to-r from-purple-500 to-pink-500 h-full rounded-full transition-all"
+                                                        style={{ width: `${Math.min(count * 20, 100)}%` }}
+                                                    />
+                                                </div>
+                                                <span className="text-white font-bold w-12 text-right">{count}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Recent Attendance History */}
+                            <div className="bg-white/5 backdrop-blur-lg rounded-2xl p-6 border border-white/10">
+                                <h3 className="text-xl font-semibold text-white mb-4">Recent Attendance History</h3>
+                                {studentData.attendance.length === 0 ? (
+                                    <p className="text-gray-400 text-center py-6">No records yet.</p>
+                                ) : (
+                                    <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                                        {studentData.attendance.slice(0, 20).map((record, idx) => (
+                                            <div key={record.id || idx} className="flex items-center justify-between p-3 bg-white/5 rounded-xl hover:bg-white/10 transition-colors">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 bg-gradient-to-br from-pink-500 to-purple-500 rounded-full flex items-center justify-center text-sm font-bold">
+                                                        {idx + 1}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-white">{record.class_id}</p>
+                                                        <p className="text-xs text-gray-500">{new Date(record.timestamp).toLocaleString()}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`text-xs px-2 py-1 rounded-full ${record.status === 'CONFIRMED'
+                                                        ? 'bg-green-500/20 text-green-400'
+                                                        : 'bg-yellow-500/20 text-yellow-400'
+                                                        }`}>
+                                                        {record.status}
+                                                    </span>
+                                                    {record.tx_id && (
+                                                        <a
+                                                            href={`https://testnet.algoexplorer.io/tx/${record.tx_id}`}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="text-xs text-blue-400 hover:text-blue-300"
+                                                        >
+                                                            View TX
+                                                        </a>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    ) : null}
+
+                    {error && (
+                        <div className="mt-6 p-4 bg-red-500/20 border border-red-500/50 rounded-xl">
+                            <p className="text-red-300">{error}</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
+    // ==================== TEACHER / HOD VIEW ====================
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 pt-24 px-6 pb-10">
             <div className="max-w-7xl mx-auto">
@@ -78,7 +277,7 @@ const AIReports = () => {
                         </div>
                         <div>
                             <h1 className="text-3xl font-bold text-white">AI Reports</h1>
-                            <p className="text-gray-400">Powered by Gemini AI</p>
+                            <p className="text-gray-400">Powered by Gemini AI — All Students Overview</p>
                         </div>
                     </div>
                     <button
@@ -146,7 +345,6 @@ const AIReports = () => {
                 {/* Charts Section */}
                 {stats?.charts && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                        {/* Attendance by Class */}
                         <div className="bg-white/5 backdrop-blur-lg rounded-2xl p-6 border border-white/10">
                             <h3 className="text-xl font-semibold text-white mb-4">Attendance by Class</h3>
                             <div className="space-y-3">
@@ -165,7 +363,6 @@ const AIReports = () => {
                             </div>
                         </div>
 
-                        {/* Attendance by Day */}
                         <div className="bg-white/5 backdrop-blur-lg rounded-2xl p-6 border border-white/10">
                             <h3 className="text-xl font-semibold text-white mb-4">Attendance by Day</h3>
                             <div className="space-y-3">
@@ -186,7 +383,7 @@ const AIReports = () => {
                     </div>
                 )}
 
-                {/* AI Insights Panel */}
+                {/* AI Insights */}
                 {insights && (
                     <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 backdrop-blur-lg 
                                     rounded-2xl p-8 border border-purple-500/20 mb-8">
@@ -195,14 +392,12 @@ const AIReports = () => {
                             <h2 className="text-2xl font-bold text-white">AI-Generated Insights</h2>
                         </div>
 
-                        {/* Summary */}
                         <div className="mb-6 p-4 bg-white/5 rounded-xl">
                             <h3 className="text-lg font-semibold text-purple-300 mb-2">Summary</h3>
                             <p className="text-gray-200">{insights.summary}</p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Trends */}
                             <div className="p-4 bg-white/5 rounded-xl">
                                 <h3 className="text-lg font-semibold text-blue-300 mb-3 flex items-center gap-2">
                                     <TrendingUp className="w-5 h-5" /> Key Trends
@@ -217,7 +412,6 @@ const AIReports = () => {
                                 </ul>
                             </div>
 
-                            {/* At-Risk Students */}
                             <div className="p-4 bg-white/5 rounded-xl">
                                 <h3 className="text-lg font-semibold text-red-300 mb-3 flex items-center gap-2">
                                     <AlertTriangle className="w-5 h-5" /> At-Risk Students
@@ -237,7 +431,6 @@ const AIReports = () => {
                             </div>
                         </div>
 
-                        {/* Recommendations */}
                         <div className="mt-6 p-4 bg-white/5 rounded-xl">
                             <h3 className="text-lg font-semibold text-green-300 mb-3">Recommendations</h3>
                             <ul className="space-y-2">
@@ -294,7 +487,6 @@ const AIReports = () => {
                     )}
                 </div>
 
-                {/* Error Display */}
                 {error && (
                     <div className="mt-6 p-4 bg-red-500/20 border border-red-500/50 rounded-xl">
                         <p className="text-red-300">{error}</p>

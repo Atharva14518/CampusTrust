@@ -8,6 +8,10 @@ const certificateRoutes = require('./routes/certificate');
 const feedbackRoutes = require('./routes/feedback');
 const identityRoutes = require('./routes/identity');
 const reportsRoutes = require('./routes/reports');
+const analyticsRoutes = require('./routes/analytics');
+const chatRoutes = require('./routes/chat');
+const notificationRoutes = require('./routes/notifications');
+const votingRoutes = require('./routes/voting');
 
 dotenv.config();
 
@@ -16,10 +20,13 @@ const PORT = process.env.PORT || 3000;
 
 // CORS configuration for mobile access
 app.use(cors({
-    origin: '*', // Allow all origins in development
+    origin: '*',
     credentials: true
 }));
 app.use(express.json());
+
+// Trust proxy for accurate IP detection
+app.set('trust proxy', true);
 
 // Routes
 app.use('/api/attendance', attendanceRoutes);
@@ -27,12 +34,30 @@ app.use('/api/certificate', certificateRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/identity', identityRoutes);
 app.use('/api/reports', reportsRoutes);
-const analyticsRoutes = require('./routes/analytics');
 app.use('/api/analytics', analyticsRoutes);
-const chatRoutes = require('./routes/chat');
 app.use('/api/chat', chatRoutes);
-const notificationRoutes = require('./routes/notifications');
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/voting', votingRoutes);
+
+// All students endpoint (for Teacher/HOD dashboards)
+app.get('/api/students/all', async (req, res) => {
+    try {
+        const [rows] = await db.execute(`
+            SELECT 
+                a.wallet_address as address,
+                MAX(a.student_name) as name,
+                COUNT(a.id) as total_attendance,
+                MAX(a.timestamp) as last_seen
+            FROM attendance a
+            GROUP BY a.wallet_address
+            ORDER BY total_attendance DESC
+        `);
+        res.json({ success: true, students: rows });
+    } catch (error) {
+        console.error('Get all students error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
 
 // Serve static frontend files in production
 const frontendPath = path.join(__dirname, '../frontend/dist');

@@ -4,7 +4,7 @@ import { Sparkles, Shield, Zap, Trophy, QrCode, Award, ArrowRight, CheckCircle, 
 import { useWallet } from '../context/WalletContext';
 
 const Landing = () => {
-    const { account, connectWallet } = useWallet();
+    const { account } = useWallet();
 
     const features = [
         {
@@ -70,23 +70,14 @@ const Landing = () => {
 
                     {/* CTA Buttons */}
                     <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                        {account ? (
-                            <Link
-                                to="/student"
-                                className="group flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold text-lg transition-all hover:scale-105 hover:shadow-2xl hover:shadow-pink-500/30"
-                            >
-                                Go to Dashboard
-                                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                            </Link>
-                        ) : (
-                            <button
-                                onClick={connectWallet}
-                                className="group flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold text-lg transition-all hover:scale-105 hover:shadow-2xl hover:shadow-pink-500/30 pulse-glow"
-                            >
-                                <Sparkles className="w-5 h-5" />
-                                Connect Wallet to Start
-                            </button>
-                        )}
+                        <Link
+                            to="/login"
+                            className="group flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold text-lg transition-all hover:scale-105 hover:shadow-2xl hover:shadow-pink-500/30 pulse-glow"
+                        >
+                            <Sparkles className="w-5 h-5" />
+                            {account ? 'Go to Dashboard' : 'Get Started'}
+                            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        </Link>
                         <Link
                             to="/leaderboard"
                             className="flex items-center gap-2 px-8 py-4 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-semibold border border-white/10 hover:border-white/20 transition-all"
@@ -168,15 +159,13 @@ const Landing = () => {
                             <p className="text-gray-300 mb-8 text-lg">
                                 Join the blockchain revolution in education
                             </p>
-                            {!account && (
-                                <button
-                                    onClick={connectWallet}
-                                    className="inline-flex items-center gap-3 px-10 py-4 rounded-2xl bg-white text-gray-900 font-bold text-lg hover:bg-gray-100 transition-all hover:scale-105"
-                                >
-                                    Get Started Now
-                                    <ArrowRight className="w-5 h-5" />
-                                </button>
-                            )}
+                            <Link
+                                to="/login"
+                                className="inline-flex items-center gap-3 px-10 py-4 rounded-2xl bg-white text-gray-900 font-bold text-lg hover:bg-gray-100 transition-all hover:scale-105"
+                            >
+                                Get Started Now
+                                <ArrowRight className="w-5 h-5" />
+                            </Link>
                         </div>
                     </div>
                 </div>

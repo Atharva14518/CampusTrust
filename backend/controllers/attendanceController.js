@@ -70,6 +70,24 @@ exports.markAttendance = async (req, res) => {
             console.log(`✅ Location verified: ${Math.round(serverDistance)}m from classroom`);
         }
 
+        // SERVER-SIDE VALIDATION 3: Anti-Proxy (IP Check)
+        const ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+
+        // Check if this IP has already marked attendance for this class
+        const [existingIp] = await db.execute(
+            'SELECT id FROM attendance WHERE class_id = ? AND ip_address = ?',
+            [classId, ipAddress]
+        );
+
+        if (existingIp.length > 0) {
+            console.log(`🚨 Proxy detected! Duplicate IP: ${ipAddress} for class ${classId}`);
+            return res.status(403).json({
+                success: false,
+                error: 'Attendance already marked from this device/IP. One entry per device allowed.',
+                proxyDetected: true
+            });
+        }
+
         // Verify transaction on Algorand
         try {
             const txInfo = await algodClient.pendingTransactionInformation(txId).do();
@@ -78,10 +96,17 @@ exports.markAttendance = async (req, res) => {
                 return res.status(400).json({ success: false, error: 'Transaction not confirmed' });
             }
 
-            // Store in database with location data
+            // Store in database with location data and IP
             const [rows] = await db.execute(
-                'INSERT INTO attendance (class_id, wallet_address, student_name, tx_id, timestamp, status) VALUES (?, ?, ?, ?, NOW(), ?)',
-                [classId, walletAddress, studentName || 'Anonymous', txId, 'CONFIRMED']
+                'INSERT INTO attendance (class_id, wallet_address, student_name, tx_id, timestamp, status, ip_address) VALUES (?, ?, ?, ?, NOW(), ?, ?)',
+                [
+                    classId,
+                    walletAddress,
+                    studentName || 'Anonymous',
+                    txId,
+                    'CONFIRMED',
+                    ipAddress
+                ]
             );
 
             // Send SMS notification to parent if phone provided
@@ -107,7 +132,8 @@ exports.markAttendance = async (req, res) => {
                 recordId: rows.insertId,
                 smsSent: smsSent,
                 distance: distance,
-                serverValidated: true
+                serverValidated: true,
+                ip: ipAddress
             });
 
         } catch (txError) {

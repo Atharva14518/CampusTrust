@@ -237,7 +237,7 @@ const StudentDashboard = () => {
                 {/* Quick Actions */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <a
-                        href="/attendance"
+                        href="/scan"
                         className="group glass-card p-6 flex items-center gap-4 card-hover"
                     >
                         <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -245,7 +245,7 @@ const StudentDashboard = () => {
                         </div>
                         <div>
                             <h3 className="text-lg font-bold text-white mb-1">Mark Attendance</h3>
-                            <p className="text-sm text-gray-400">Scan QR to mark attendance</p>
+                            <p className="text-sm text-gray-400">Scan teacher's QR code</p>
                         </div>
                         <ArrowUpRight className="ml-auto text-gray-600 group-hover:text-white transition-colors" />
                     </a>
