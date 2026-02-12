@@ -246,19 +246,24 @@ export const WalletProvider = ({ children }) => {
         }
 
         const txnArray = Array.isArray(txns) ? txns : [txns];
-        const base64Array = txnArray.map(t => {
-            // Extract base64 from Lute format {txn: base64}
-            return t.txn || t;
-        });
 
-        if (walletType === 'pera') {
-            if (!peraWallet) throw new Error('Pera Wallet not initialized');
-            // Pera expects base64 arrays in groups: [[base64_1, base64_2, ...]]
-            return await peraWallet.signTransaction([base64Array]);
-        } else if (walletType === 'defly') {
-            if (!deflyWallet) throw new Error('Defly Wallet not initialized');
-            // Defly expects same format as Pera
-            return await deflyWallet.signTransaction([base64Array]);
+        if (walletType === 'pera' || walletType === 'defly') {
+            // Both Pera and Defly expect transaction OBJECTS (decoded from base64)
+            // grouped in an array of arrays: [[txn1, txn2, ...]]
+            const txnObjects = txnArray.map(t => {
+                const base64 = t.txn || t;
+                return algosdk.decodeUnsignedTransaction(
+                    Buffer.from(base64, 'base64')
+                );
+            });
+
+            if (walletType === 'pera') {
+                if (!peraWallet) throw new Error('Pera Wallet not initialized');
+                return await peraWallet.signTransaction([txnObjects]);
+            } else {
+                if (!deflyWallet) throw new Error('Defly Wallet not initialized');
+                return await deflyWallet.signTransaction([txnObjects]);
+            }
         } else if (walletType === 'lute') {
             if (!lute) throw new Error('Lute wallet not initialized');
             // Lute expects array of {txn: base64} objects
