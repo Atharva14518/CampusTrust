@@ -39,7 +39,7 @@ export const WalletProvider = ({ children }) => {
             }
         };
 
-        // Initialize Pera Wallet with WalletConnect options for mobile
+        // Initialize Per Wallet with WalletConnect options for mobile
         const pera = new PeraWalletConnect({
             chainId: 416002, // Algorand TestNet chain ID (416001 for MainNet)
             shouldShowSignTxnToast: true,
@@ -128,7 +128,7 @@ export const WalletProvider = ({ children }) => {
             if (error.message?.includes('User rejected')) {
                 throw new Error('Connection rejected in Pera Wallet app');
             } else if (error.message?.includes('session')) {
-                throw new Error('WalletConnect session failed.\n\nTry:\n1. Close Pera app completely\n2. Reconnect and scan QR again');
+                throw new Error('WalletConnect session failed.\\n\\nTry:\\n1. Close Pera app completely\\n2. Reconnect and scan QR again');
             }
             throw error;
         }
@@ -233,7 +233,7 @@ export const WalletProvider = ({ children }) => {
         return algodClient;
     };
 
-    // Restore session on mount
+    // Restore wallet session on page load
     useEffect(() => {
         const saved = localStorage.getItem('walletAddress');
         const savedType = localStorage.getItem('walletType');
@@ -246,10 +246,29 @@ export const WalletProvider = ({ children }) => {
             if (savedType === 'lute') {
                 const luteInstance = new LuteConnect('TrustCampus');
                 setLute(luteInstance);
+            } else if (savedType === 'pera' && peraWallet) {
+                // Reconnect Pera Wallet session
+                peraWallet.reconnectSession().then((accounts) => {
+                    if (accounts && accounts.length > 0) {
+                        console.log('✓ Pera session restored:', accounts[0].substring(0, 8) + '...');
+                        setAccount(accounts[0]);
+                    } else {
+                        console.log('⚠ Pera session expired, clearing...');
+                        localStorage.removeItem('walletAddress');
+                        localStorage.removeItem('walletType');
+                        setAccount(null);
+                        setWalletType(null);
+                    }
+                }).catch((err) => {
+                    console.error('Pera reconnect failed:', err);
+                    localStorage.removeItem('walletAddress');
+                    localStorage.removeItem('walletType');
+                    setAccount(null);
+                    setWalletType(null);
+                });
             }
-            // Pera Wallet will auto-reconnect via its own mechanism
         }
-    }, []);
+    }, [peraWallet]);
 
     // Listen for Pera Wallet disconnect events
     useEffect(() => {
