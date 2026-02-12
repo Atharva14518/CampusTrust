@@ -141,7 +141,7 @@ const Attendance = () => {
         };
 
         const baseUrl = window.location.origin;
-        const url = `${baseUrl}/scan?data=${encodeURIComponent(JSON.stringify(data))}`;
+        const url = `${baseUrl}/mark-attendance?data=${encodeURIComponent(JSON.stringify(data))}`;
 
         setQrData(url);
         setScanUrl(url);

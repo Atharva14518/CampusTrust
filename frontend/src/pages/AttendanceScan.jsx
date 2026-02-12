@@ -305,10 +305,10 @@ const AttendanceScan = () => {
                     <h2 className="text-2xl font-bold text-white mb-2">Invalid QR Code</h2>
                     <p className="text-gray-400 mb-6">Please scan a valid attendance QR code</p>
                     <button
-                        onClick={() => navigate('/attendance')}
+                        onClick={() => navigate('/scan')}
                         className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg font-bold text-white"
                     >
-                        Go to Attendance
+                        Scan Again
                     </button>
                 </div>
             </div>
