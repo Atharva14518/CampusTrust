@@ -1,148 +1,235 @@
-# 🎓 TrustCampus - Blockchain-Powered Campus Ecosystem
+# TrustCampus - Blockchain-Powered Campus Ecosystem (AlgoHub Hackathon Starter)
 
-A revolutionary **Web3 campus management system** built on **Algorand**, featuring role-based access, tamper-proof attendance, NFT certificates, decentralized voting, and AI-powered insights.
+This comprehensive guide helps developers and evaluators quickly prototype, test, and deploy the TrustCampus decentralized campus management system on Algorand. You'll set up the full stack (React + Node.js + Algorand), configure smart contracts, and explore key features like Role-Based Access Control (RBAC), Smart Attendance, Decentralized Voting, and NFT Certificates.
 
-> 🏆 **Hackathon-Ready** | React + Node.js + Algorand + Pera/Defly/Lute Wallets
+**Repo to fork/clone:** `https://github.com/Atharva14518/CampusTrust` (source)
+**Works with:** AlgoKit, Pera/Defly/Lute Wallets, React 18, Node.js
 
-![Algorand](https://img.shields.io/badge/Algorand-TestNet-000000?style=for-the-badge&logo=algorand)
-![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react)
-![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=nodedotjs)
-![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3-06B6D4?style=for-the-badge&logo=tailwindcss)
-![Vite](https://img.shields.io/badge/Vite-4.0-646CFF?style=for-the-badge&logo=vite)
-
----
-
-## 🚀 Key Features
-
-### 🔐 **Role-Based Access Control (RBAC)**
-*   **👨‍🎓 Student**: Mark attendance, view NFTs, vote, check leaderboard.
-*   **👨‍🏫 Teacher**: Create classes, generate QR codes, mint certificates, manage proposals.
-*   **👔 HOD (Admin)**: Department analytics, oversee teachers, advanced reporting.
-
-### 📱 **Smart Attendance System**
-*   **Camera-Based Scanning**: Built-in QR scanner for students (no external app needed).
-*   **Geo-Fencing**: Validates student location within 100m of the classroom.
-*   **Anti-Spoofing**: Prevents proxy attendance via IP tracking and device fingerprinting.
-*   **Blockchain Record**: Every check-in is an immutable transaction on Algorand.
-
-### 🗳️ **Decentralized Voting & Governance**
-*   **Proposals**: Teachers/HODs create proposals for campus decisions.
-*   **On-Chain Voting**: Students vote directly via wallet transactions.
-*   **Transparent Results**: Real-time vote counts verifiable on the blockchain.
-
-### 💼 **Multi-Wallet Support**
-*   **Pera Wallet** (Mobile/Web)
-*   **Defly Wallet**
-*   **Lute Wallet**
-*   **Kibisis**
-
-### 🏅 **NFT Certificates & Rewards**
-*   **Soulbound Tokens**: Non-transferable NFTs for course completion.
-*   **Gamification**: Leaderboards, streaks, and badges to boost engagement.
+**Key Modules Included:**
+*   **🔐 Role-Based Access:** Student, Teacher, and HOD dashboards with distinct permissions.
+*   **� Smart Attendance:** Camera-based QR scanning with geo-fencing and anti-spoofing.
+*   **�️ Decentralized Voting:** On-chain proposal creation and voting logic.
+*   **🏅 NFT Certificates:** Minting soulbound tokens for academic achievements.
+*   **🤖 AI Insights:** Local LLM integration for attendance analytics.
 
 ---
 
-## 🛠️ Tech Stack
+## 1) Project Setup
 
-*   **Frontend**: React.js, Vite, TailwindCSS, Framer Motion, html5-qrcode
-*   **Backend**: Node.js, Express, MySQL
-*   **Blockchain**: Algorand SDK, Pera Connect, Defly Connect
-*   **AI/ML**: Ollama (Local LLM) for insights
-*   **Storage**: Pinata IPFS (for NFT metadata)
+**Prerequisites:**
+*   **Node.js 18+** and npm
+*   **MySQL Server** (local or cloud)
+*   **Algorand Wallet** (Pera Mobile, Defly, or Lute Extension)
+*   **Git** installed
 
----
-
-## 📦 Project Structure
-
-```
-trustcampus/
-├── frontend/
-│   ├── src/
-│   │   ├── pages/          # Role-specific dashboards (Student/Teacher/HOD)
-│   │   ├── components/     # QRScanner, Navbar, WalletConnect
-│   │   ├── context/        # Wallet & Auth Context
-│   │   └── contracts/      # TEAL Smart Contracts
-│   └── .env                # API Config
-│
-├── backend/
-│   ├── controllers/        # Attendance, Voting, Certificate Logic
-│   ├── routes/             # API Endpoints
-│   ├── init_db.js          # Database migrations
-│   └── .env                # Secrets (DB, Algo, Pinata)
-│
-└── contracts/              # PyTeal Source Code
-```
-
----
-
-## 🚦 Quick Start
-
-### 1️⃣ Clone & Install
+### Clone the Repository
 ```bash
 git clone https://github.com/Atharva14518/CampusTrust.git
 cd CampusTrust
 ```
 
-### 2️⃣ Backend Setup
+### Backend Bootstrap (Database & API)
 ```bash
 cd backend
 npm install
 
-# Setup .env (Refer to .env.example)
-# Ensure MySQL is running and create database 'trustcampus'
+# Create .env from example (see Section 2)
+# Ensure MySQL is running
 
-# Initialize Database & Migrations
+# Initialize Database Schema & Migrations
 node init_db.js
 
-# Start Server
+# Start the Backend Server
 npm start
+# Server runs on http://localhost:3001
 ```
 
-### 3️⃣ Frontend Setup
+### Frontend Bootstrap (React UI)
 ```bash
-cd frontend
+cd ../frontend
 npm install
 
-# Start React App
+# Start the Frontend
 npm run dev
+# App runs on http://localhost:5173
 ```
 
----
-
-## 📱 User Descriptions & Workflows
-
-### 👨‍🎓 **Student Workflow**
-1.  **Login**: Connect wallet -> Select "Student".
-2.  **Mark Attendance**: Click "Scan QR" -> Point camera at teacher's screen -> Sign transaction.
-3.  **Vote**: Go to "Vote" -> Browse proposals -> Cast "Yes/No/Abstain".
-4.  **Profile**: View attendance stats, collected NFTs, and leaderboard rank.
-
-### 👨‍🏫 **Teacher Workflow**
-1.  **Login**: Connect wallet -> Select "Teacher".
-2.  **Start Class**: Go to "Attendance" -> Set location -> Generate QR.
-3.  **Manage**: Mint certificates for top students, create voting proposals.
-4.  **Reports**: View class-wise analytics and AI insights.
-
-### 👔 **HOD Workflow**
-1.  **Login**: Connect wallet -> Select "HOD".
-2.  **Oversight**: View department-wide statistics and teacher performance.
-3.  **Governance**: Create high-level proposals and manage department settings.
+**Optional references:**
+*   **Algorand Developer Portal:** https://dev.algorand.co/
+*   **AlgoKit Workshops:** https://algorand.co/algokit-workshops
+*   **Algodevs YouTube:** https://www.youtube.com/@algodevs
 
 ---
 
-## 🧪 Testing Guide
+## 2) Required Environment Variables
 
-1.  **Wallet**: Use **TestNet** accounts. Get ALGO from [Dispenser](https://bank.testnet.algorand.network/).
-2.  **Attendance**:
-    *   Open Teacher Dashboard in one tab/browser (Generate QR).
-    *   Open Student Dashboard in mobile/another window.
-    *   Use "Scan QR" to scan the code.
-3.  **Voting**:
-    *   Create a proposal as Teacher.
-    *   Vote as Student.
-    *   Verify transaction on [AlgoExplorer](https://testnet.algoexplorer.io/).
+### Backend (`backend/.env`)
+Create `backend/.env` with the following values for TestNet and Database:
+
+```env
+# Database Configuration
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=trustcampus
+
+# Algorand TestNet Node (Free Tier)
+ALGOD_SERVER=https://testnet-api.4160.nodely.dev
+ALGOD_PORT=
+ALGOD_TOKEN=
+
+# Pinata IPFS (for NFT metadata)
+PINATA_API_KEY=your_api_key
+PINATA_SECRET_KEY=your_secret_key
+
+# Optional Integrations
+TWILIO_ACCOUNT_SID=   # For SMS alerts
+TWILIO_AUTH_TOKEN=
+OLLAMA_HOST=http://localhost:11434 # For AI insights
+```
+
+### Frontend (`frontend/.env`)
+Create `frontend/.env` to point to your backend API:
+
+```env
+# Backend API URL
+VITE_API_URL=http://localhost:3001
+
+# Algorand Network Config
+VITE_ALGOD_SERVER=https://testnet-api.4160.nodely.dev
+VITE_ALGOD_NETWORK=testnet
+```
+
+**Notes:**
+*   Pinata keys are required for Minting NFT Certificates.
+*   Restart servers (`npm start` / `npm run dev`) after editing `.env` files.
+
+---
+
+## 3) Project Map (What to Tweak)
+
+### Frontend Location: `frontend/src`
+
+**Key Pages & Components:**
+*   `src/pages/Login.jsx` — **Role Selection Logic**. Handles wallet connection and redirects based on role (Student/Teacher/HOD).
+*   `src/pages/StudentDashboard.jsx` — **Student Hub**. Displays attendance stats, NFT gallery, and active proposals.
+*   `src/pages/TeacherDashboard.jsx` — **Teacher Hub**. Class management, QR generation, and certificate minting.
+*   `src/pages/QRScanner.jsx` — **Camera Intelligence**. Handles real-time QR scanning and decoding for attendance.
+*   `src/pages/Voting.jsx` — **Governance**. Lists proposals and handles on-chain voting transactions.
+*   `src/pages/AIReports.jsx` — **Analytics**. Renders charts and AI-generated insights based on user role.
+*   `src/context/WalletContext.jsx` — **Wallet Connect**. Manages connections for Pera, Defly, and Lute wallets.
+
+### Backend Location: `backend/`
+
+**Key Controllers:**
+*   `controllers/attendanceController.js` — Validates geo-location, marks attendance, prevents proxies.
+*   `controllers/proposalController.js` — Manages proposal lifecycle and vote tallying.
+*   `controllers/certificateController.js` — Handles IPFS metadata upload and NFT minting.
+
+---
+
+## 4) Feature Deep Dive & AI Redesign Prompts
+
+How to work with AI to customize this template safely (keep logic intact).
+
+### 4.1 Student Dashboard & QR Scanner
+**File:** `frontend/src/pages/StudentDashboard.jsx` & `frontend/src/pages/QRScanner.jsx`
+
+**Prompt:**
+> I'm building a student portal for a blockchain campus app. Redesign the dashboard to focus on gamification:
+> - Display "Attendance Streak" and "NFT Badges" prominently.
+> - Use a card layout for "Recent Activity" and "Active Votes".
+> - Ensure the "Scan QR" button is the primary Call-to-Action (CTA).
+> - Keep all data fetching and wallet logic EXACTLY as is. Only update JSX and Tailwind classes.
+
+### 4.2 Teacher Dashboard & Minting
+**File:** `frontend/src/pages/TeacherDashboard.jsx`
+
+**Prompt:**
+> Enhance the Teacher Dashboard for better classroom management. Redesign the layout to include:
+> - A "Quick Actions" bar for: Generate QR, Mint Certificate, Create Proposal.
+> - A data table for "Recent Attendance" with export options.
+> - A monitoring panel for "Active Sessions".
+> - Keep all state management and API calls distinct. Modify only the visual structure.
+
+### 4.3 Decentralized Voting System
+**File:** `frontend/src/pages/Voting.jsx`
+
+**Prompt:**
+> I'm building a governance interface. Redesign the voting page to look like a DAO dashboard:
+> - Display proposals in a list with "Time Remaining" progress bars.
+> - Show live "Yes/No/Abstain" counts with visual graphs.
+> - Style the "Vote" buttons to be distinct and provide feedback on click.
+> - Maintain the on-chain transaction logic perfectly.
+
+### 4.4 NFT Certificates (Pinata + IPFS)
+**File:** `frontend/src/pages/Certificates.jsx`
+
+**Prompt:**
+> Redesign the Certificate Gallery to look like a digital trophy case:
+> - Display NFTs in a grid with high-quality previews.
+> - Add a "Mint New" modal for teachers with clear file upload inputs.
+> - Show metadata (Course Name, Date) on hover.
+> - Keep the Pinata IPFS upload logic intact.
+
+---
+
+## 5) Smart Contract Interaction Basics
+
+*   **Attendance**: Each marked attendance is a `PaymentTransaction` (0 ALGO) with a compiled note containing Class ID, Student ID, and Timestamp. This creates an immutable on-chain record.
+*   **Voting**: Votes are cast as transactions to a specific Voting App ID (or logged via notes for simpler implementation), allowing for transparent tallying.
+*   **Certificates**: Standard Algorand Stars Assets (ASAs) are minted. Metadata is stored on IPFS, and the Asset ID is linked to the student's account.
+
+---
+
+## 6) Troubleshooting
+
+**"Invalid QR Code" / Blank Screen on Scan**
+*   Ensure the QR code was generated by the *current* Teacher Dashboard session.
+*   Check if the QR has expired (default validity is 5 minutes).
+*   Verify `VITE_API_URL` matches your backend address.
+
+**Wallet Connection Fails**
+*   Ensure your wallet (Pera/Defly) is on **TestNet**.
+*   Check if you have enough ALGO for transaction fees (Dispenser: https://bank.testnet.algorand.network/).
+*   Clear browser cache if switching between wallet providers.
+
+**"Minting Failed"**
+*   Verify Pinata keys in `backend/.env`.
+*   Ensure the image file is not too large (>5MB).
+*   Check if the creator account has sufficient minimum balance for asset creation (0.1 ALGO).
+
+---
+
+## 7) CI/CD & Deployment
+
+### Backend (Render/Railway/Heroku)
+1.  Push code to GitHub.
+2.  Connect repo to hosting provider.
+3.  Set environment variables (`DB_URL`, `ALGO_TOKEN`, `PINATA_KEY`).
+4.  Build Command: `npm install`
+5.  Start Command: `npm start`
+
+### Frontend (Vercel/Netlify)
+1.  Connect GitHub repo.
+2.  Set Build Command: `npm run build`
+3.  Set Publish Directory: `dist`
+4.  Add `VITE_API_URL` environment variable pointing to your deployed backend.
+
+---
+
+## 8) Copy-Ready AI Prompt Snippets
+
+**Home (Landing Page):**
+> Redesign `frontend/src/pages/Landing.jsx` as a high-conversion Web3 landing page. Hero section with "Blockchain-Verified Education", feature grid for (Attendance, NFTs, Voting), and a "Connect Wallet" CTA. Keep logic intact.
+
+**Voting:**
+> Redesign `frontend/src/pages/Voting.jsx` to visualize governance. Show proposals with clear status (Active/Passed), progress bars for votes, and a clean "Create Proposal" form for teachers. Maintain all voting logic.
+
+**QR Scanner:**
+> Redesign `frontend/src/pages/QRScanner.jsx` for mobile-first usage. Large camera view, clear overlay instructions ("Align QR Code"), and immediate feedback upon scan success. Keep the html5-qrcode integration logic.
 
 ---
 
 ## 📄 License
-MIT License. Built for the **Algorand Global Hackathon**.
+MIT License - Built for the **Algorand Global Hackathon**.
