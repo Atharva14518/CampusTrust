@@ -259,7 +259,13 @@ const AttendanceScan = () => {
 
         } catch (err) {
             console.error(err);
-            setError(err.message || 'Failed to mark attendance');
+            let msg = err.message || 'Failed to mark attendance';
+
+            if (msg.includes('Genesis') || msg.includes('Network')) {
+                msg = 'Network Mismatch: Please switch your wallet app to TestNet in settings.';
+            }
+
+            setError(msg);
         } finally {
             setLoading(false);
         }
