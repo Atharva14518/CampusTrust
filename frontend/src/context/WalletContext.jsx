@@ -248,13 +248,14 @@ export const WalletProvider = ({ children }) => {
         const txnArray = Array.isArray(txns) ? txns : [txns];
 
         if (walletType === 'pera' || walletType === 'defly') {
-            // Both Pera and Defly expect transaction OBJECTS (decoded from base64)
-            // grouped in an array of arrays: [[txn1, txn2, ...]]
+            // Both Pera and Defly expect SignerTransaction objects
+            // grouped in an array of arrays: [[{ txn: decodedTxn, ... }]]
             const txnObjects = txnArray.map(t => {
                 const base64 = t.txn || t;
-                return algosdk.decodeUnsignedTransaction(
+                const decoded = algosdk.decodeUnsignedTransaction(
                     Buffer.from(base64, 'base64')
                 );
+                return { txn: decoded };
             });
 
             if (walletType === 'pera') {
