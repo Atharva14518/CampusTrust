@@ -213,7 +213,8 @@ export const WalletProvider = ({ children }) => {
                 return t;
             });
 
-            const signedTxns = await peraWallet.signTransaction([txnObjects]);
+            // Pera expects array of transaction objects (NOT nested in another array)
+            const signedTxns = await peraWallet.signTransaction(txnObjects);
             return signedTxns;
         } else if (walletType === 'lute') {
             // Lute Wallet expects array of {txn: base64} objects
