@@ -104,6 +104,13 @@ export const WalletProvider = ({ children }) => {
         }
 
         try {
+            // Disconnect any existing session first to avoid "account cannot be connected" error
+            try {
+                await peraWallet.disconnect();
+            } catch (e) {
+                // Ignore disconnect errors
+            }
+
             const accounts = await peraWallet.connect();
 
             if (!accounts || accounts.length === 0) {
@@ -129,6 +136,8 @@ export const WalletProvider = ({ children }) => {
                 throw new Error('Connection rejected in Pera Wallet app');
             } else if (error.message?.includes('session')) {
                 throw new Error('WalletConnect session failed.\\n\\nTry:\\n1. Close Pera app completely\\n2. Reconnect and scan QR again');
+            } else if (error.message?.includes('account')) {
+                throw new Error('Account connection failed.\\n\\nTry:\\n1. Disconnect Pera Wallet\\n2. Close the app\\n3. Reconnect again');
             }
             throw error;
         }
