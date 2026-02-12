@@ -58,8 +58,24 @@ const QRScanner = () => {
                         html5QrCode.stop().then(() => {
                             setScanning(false);
 
-                            // Navigate to attendance marking page with QR data
-                            navigate(`/mark-attendance?data=${encodeURIComponent(decodedText)}`);
+                            try {
+                                // The QR code contains a full URL like: http://localhost:5174/mark-attendance?data=...
+                                // We need to extract the 'data' parameter from it
+                                const url = new URL(decodedText);
+                                const dataParam = url.searchParams.get('data');
+
+                                if (dataParam) {
+                                    // Navigate with the extracted data
+                                    navigate(`/mark-attendance?data=${encodeURIComponent(dataParam)}`);
+                                } else {
+                                    // If no data param found, maybe it's just raw JSON? Try passing it as-is
+                                    navigate(`/mark-attendance?data=${encodeURIComponent(decodedText)}`);
+                                }
+                            } catch (urlError) {
+                                // If it's not a valid URL, assume it's raw JSON data
+                                console.log('Not a URL, treating as raw data');
+                                navigate(`/mark-attendance?data=${encodeURIComponent(decodedText)}`);
+                            }
                         }).catch(err => {
                             console.error('Failed to stop scanner:', err);
                         });
