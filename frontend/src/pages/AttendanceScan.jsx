@@ -72,9 +72,16 @@ const AttendanceScan = () => {
 
     useEffect(() => {
         const data = searchParams.get('data');
+        console.log('📍 AttendanceScan received data param:', data);
+
         if (data) {
             try {
-                const parsed = JSON.parse(decodeURIComponent(data));
+                const decoded = decodeURIComponent(data);
+                console.log('📍 Decoded data:', decoded);
+
+                const parsed = JSON.parse(decoded);
+                console.log('📍 Parsed JSON:', parsed);
+
                 setClassData(parsed);
 
                 // Check expiry
@@ -84,8 +91,12 @@ const AttendanceScan = () => {
                     setIsExpired(remaining === 0);
                 }
             } catch (e) {
+                console.error('📍 Failed to parse QR data:', e);
+                console.error('📍 Raw data was:', data);
                 setError('Invalid QR code data');
             }
+        } else {
+            console.log('📍 No data parameter found in URL');
         }
     }, [searchParams]);
 

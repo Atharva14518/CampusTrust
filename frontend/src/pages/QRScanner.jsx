@@ -52,7 +52,7 @@ const QRScanner = () => {
                     },
                     (decodedText) => {
                         // QR code detected!
-                        console.log('QR Code detected:', decodedText);
+                        console.log('🔍 QR Code RAW scanned text:', decodedText);
 
                         // Stop scanning
                         html5QrCode.stop().then(() => {
@@ -62,18 +62,23 @@ const QRScanner = () => {
                                 // The QR code contains a full URL like: http://localhost:5174/mark-attendance?data=...
                                 // We need to extract the 'data' parameter from it
                                 const url = new URL(decodedText);
+                                console.log('🔍 Parsed as URL - pathname:', url.pathname, 'search:', url.search);
+
                                 const dataParam = url.searchParams.get('data');
+                                console.log('🔍 Extracted data parameter:', dataParam);
 
                                 if (dataParam) {
                                     // Navigate with the extracted data
-                                    navigate(`/mark-attendance?data=${encodeURIComponent(dataParam)}`);
+                                    const targetPath = `/mark-attendance?data=${encodeURIComponent(dataParam)}`;
+                                    console.log('🔍 Navigating to:', targetPath);
+                                    navigate(targetPath);
                                 } else {
                                     // If no data param found, maybe it's just raw JSON? Try passing it as-is
                                     navigate(`/mark-attendance?data=${encodeURIComponent(decodedText)}`);
                                 }
                             } catch (urlError) {
                                 // If it's not a valid URL, assume it's raw JSON data
-                                console.log('Not a URL, treating as raw data');
+                                console.log('🔍 Not a URL (error:', urlError.message, '), treating as raw JSON data');
                                 navigate(`/mark-attendance?data=${encodeURIComponent(decodedText)}`);
                             }
                         }).catch(err => {
