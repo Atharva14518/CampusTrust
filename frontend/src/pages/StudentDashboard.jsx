@@ -19,24 +19,38 @@ const StudentDashboard = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
+            console.log('Fetching student dashboard data for:', account);
+
+            // Fetch attendance
             const attendanceRes = await fetch(`${API_URL}/api/attendance/my?address=${account}`);
             const attendanceData = await attendanceRes.json();
+            console.log('Attendance response:', attendanceData);
             const attendanceCount = attendanceData.success ? attendanceData.attendance?.length || 0 : 0;
 
+            // Fetch certificates
             const certRes = await fetch(`${API_URL}/api/certificate/my?address=${account}`);
             const certData = await certRes.json();
+            console.log('Certificate response:', certData);
             const certCount = certData.success ? certData.certificates?.length || 0 : 0;
 
-            const algodClient = new algosdk.Algodv2('', 'https://testnet-api.4160.nodely.dev', '');
-            const accountInfo = await algodClient.accountInformation(account).do();
-            const balance = accountInfo.amount / 1000000;
+            // Fetch wallet balance
+            let balance = 0;
+            try {
+                const algodClient = new algosdk.Algodv2('', 'https://testnet-api.4160.nodely.dev', '');
+                const accountInfo = await algodClient.accountInformation(account).do();
+                balance = (accountInfo.amount / 1000000).toFixed(2);
+            } catch (balanceError) {
+                console.error('Balance fetch failed:', balanceError);
+                balance = '0.00';
+            }
 
             setStats({
                 attendance: attendanceCount,
                 certificates: certCount,
-                balance: balance.toFixed(2)
+                balance: balance
             });
 
+            // Build activity list
             const activities = [];
             if (attendanceData.success && attendanceData.attendance?.length > 0) {
                 attendanceData.attendance.slice(0, 3).forEach(record => {
@@ -67,8 +81,12 @@ const StudentDashboard = () => {
             activities.sort((a, b) => new Date(b.date) - new Date(a.date));
             setActivity(activities.slice(0, 5));
 
+            console.log('Dashboard data loaded successfully');
+
         } catch (error) {
             console.error('Failed to fetch dashboard data:', error);
+            // Set default stats even on error
+            setStats({ attendance: 0, certificates: 0, balance: '0.00' });
         } finally {
             setLoading(false);
         }

@@ -15,6 +15,7 @@ const Navbar = () => {
 
     const studentLinks = [
         { path: '/student', label: 'Dashboard', icon: LayoutDashboard },
+        { path: '/scan', label: 'Scan QR', icon: QrCode },
         { path: '/certificates', label: 'Certificates', icon: Award },
         { path: '/leaderboard', label: 'Leaderboard', icon: Trophy },
         { path: '/reports', label: 'Reports', icon: FileText },
