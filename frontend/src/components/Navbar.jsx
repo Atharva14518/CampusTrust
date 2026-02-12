@@ -34,6 +34,7 @@ const Navbar = () => {
 
     const getWalletBadge = () => {
         if (walletType === 'pera') return '🥥 Pera';
+        if (walletType === 'defly') return '🦅 Defly';
         if (walletType === 'lute') return '🦎 Lute';
         return '';
     };

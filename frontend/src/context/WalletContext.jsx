@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import LuteConnect from 'lute-connect';
 import { PeraWalletConnect } from '@perawallet/connect';
+import { DeflyWalletConnect } from '@blockshake/defly-connect';
 import algosdk from 'algosdk';
 
 const WalletContext = createContext();
@@ -14,12 +15,13 @@ export const WalletProvider = ({ children }) => {
     const [account, setAccount] = useState(null);
     const [lute, setLute] = useState(null);
     const [peraWallet, setPeraWallet] = useState(null);
-    const [walletType, setWalletType] = useState(null); // 'lute' or 'pera'
+    const [deflyWallet, setDeflyWallet] = useState(null);
+    const [walletType, setWalletType] = useState(null); // 'lute', 'pera', or 'defly'
     const [isConnecting, setIsConnecting] = useState(false);
     const [genesisID, setGenesisID] = useState(null);
     const [algodClient, setAlgodClient] = useState(null);
 
-    // Initialize Algorand client and Pera Wallet on mount
+    // Initialize Algorand client, Pera Wallet, and Defly Wallet on mount
     useEffect(() => {
         const initAlgorand = async () => {
             try {
@@ -39,12 +41,19 @@ export const WalletProvider = ({ children }) => {
             }
         };
 
-        // Initialize Per Wallet with WalletConnect options for mobile
+        // Initialize Pera Wallet with WalletConnect options for mobile
         const pera = new PeraWalletConnect({
             chainId: 416002, // Algorand TestNet chain ID (416001 for MainNet)
             shouldShowSignTxnToast: true,
         });
         setPeraWallet(pera);
+
+        // Initialize Defly Wallet with WalletConnect options
+        const defly = new DeflyWalletConnect({
+            chainId: 416002,
+            shouldShowSignTxnToast: true,
+        });
+        setDeflyWallet(defly);
 
         initAlgorand();
     }, []);
@@ -59,10 +68,10 @@ export const WalletProvider = ({ children }) => {
 
         if (!window.lute) {
             throw new Error(
-                'Lute extension not detected.\\n\\n' +
-                'Please:\\n' +
-                '1. Install Lute wallet from https://lute.app\\n' +
-                '2. Refresh this page\\n' +
+                'Lute extension not detected.\n\n' +
+                'Please:\n' +
+                '1. Install Lute wallet from https://lute.app\n' +
+                '2. Refresh this page\n' +
                 '3. Unlock your wallet'
             );
         }
@@ -135,9 +144,49 @@ export const WalletProvider = ({ children }) => {
             if (error.message?.includes('User rejected')) {
                 throw new Error('Connection rejected in Pera Wallet app');
             } else if (error.message?.includes('session')) {
-                throw new Error('WalletConnect session failed.\\n\\nTry:\\n1. Close Pera app completely\\n2. Reconnect and scan QR again');
+                throw new Error('WalletConnect session failed.\n\nTry:\n1. Close Pera app completely\n2. Reconnect and scan QR again');
             } else if (error.message?.includes('account')) {
-                throw new Error('Account connection failed.\\n\\nTry:\\n1. Disconnect Pera Wallet\\n2. Close the app\\n3. Reconnect again');
+                throw new Error('Account connection failed.\n\nTry:\n1. Disconnect Pera Wallet\n2. Close the app\n3. Reconnect again');
+            }
+            throw error;
+        }
+    };
+
+    const connectDeflyWallet = async () => {
+        if (!deflyWallet) {
+            throw new Error('Defly Wallet not initialized');
+        }
+
+        try {
+            // Disconnect any existing session first
+            try {
+                await deflyWallet.disconnect();
+            } catch (e) {
+                // Ignore disconnect errors
+            }
+
+            const accounts = await deflyWallet.connect();
+
+            if (!accounts || accounts.length === 0) {
+                throw new Error('No accounts returned from Defly Wallet');
+            }
+
+            const address = accounts[0];
+            console.log('✓ Connected via Defly:', address.substring(0, 8) + '...');
+            setAccount(address);
+            setWalletType('defly');
+            localStorage.setItem('walletAddress', address);
+            localStorage.setItem('walletType', 'defly');
+
+            // Set up disconnect listener
+            deflyWallet.connector?.on('disconnect', () => {
+                console.log('Defly Wallet disconnected');
+                disconnectWallet();
+            });
+        } catch (error) {
+            console.error('Defly connection error:', error);
+            if (error.message?.includes('User rejected')) {
+                throw new Error('Connection rejected in Defly Wallet app');
             }
             throw error;
         }
@@ -150,6 +199,8 @@ export const WalletProvider = ({ children }) => {
         try {
             if (type === 'pera') {
                 await connectPeraWallet();
+            } else if (type === 'defly') {
+                await connectDeflyWallet();
             } else {
                 await connectLuteWallet();
             }
@@ -161,12 +212,12 @@ export const WalletProvider = ({ children }) => {
             if (errorMsg.includes('rejected') || errorMsg.includes('denied') || errorMsg.includes('cancelled')) {
                 errorMsg = 'Connection was rejected. Please approve the connection in your wallet.';
             } else if (errorMsg.includes('Invalid Network')) {
-                errorMsg = 'Network mismatch.\\n\\nPlease ensure your wallet is set to TestNet';
+                errorMsg = 'Network mismatch.\n\nPlease ensure your wallet is set to TestNet';
             } else if (errorMsg.includes('not detected') && type === 'lute') {
-                errorMsg = 'Lute wallet not detected.\\n\\nPlease install from: https://lute.app';
+                errorMsg = 'Lute wallet not detected.\n\nPlease install from: https://lute.app';
             }
 
-            alert('Connection Failed:\\n\\n' + errorMsg);
+            alert('Connection Failed:\n\n' + errorMsg);
             throw error;
         } finally {
             setIsConnecting(false);
@@ -176,6 +227,8 @@ export const WalletProvider = ({ children }) => {
     const disconnectWallet = async () => {
         if (walletType === 'pera' && peraWallet) {
             await peraWallet.disconnect();
+        } else if (walletType === 'defly' && deflyWallet) {
+            await deflyWallet.disconnect();
         }
 
         setAccount(null);
@@ -192,29 +245,24 @@ export const WalletProvider = ({ children }) => {
             throw new Error('No wallet connected');
         }
 
+        const txnArray = Array.isArray(txns) ? txns : [txns];
+        const base64Array = txnArray.map(t => {
+            // Extract base64 from Lute format {txn: base64}
+            return t.txn || t;
+        });
+
         if (walletType === 'pera') {
-            // Check if peraWallet is initialized
-            if (!peraWallet) {
-                throw new Error('Pera Wallet not initialized. Please reconnect.');
-            }
-
+            if (!peraWallet) throw new Error('Pera Wallet not initialized');
             // Pera expects base64 arrays in groups: [[base64_1, base64_2, ...]]
-            const txnArray = Array.isArray(txns) ? txns : [txns];
-            const base64Array = txnArray.map(t => {
-                // Extract base64 from Lute format {txn: base64}
-                return t.txn || t;
-            });
-
-            // Pass as array of groups
-            const signedTxns = await peraWallet.signTransaction([base64Array]);
-            return signedTxns;
+            return await peraWallet.signTransaction([base64Array]);
+        } else if (walletType === 'defly') {
+            if (!deflyWallet) throw new Error('Defly Wallet not initialized');
+            // Defly expects same format as Pera
+            return await deflyWallet.signTransaction([base64Array]);
         } else if (walletType === 'lute') {
-            // Lute Wallet expects array of {txn: base64} objects
-            if (!lute) {
-                throw new Error('Lute wallet not initialized');
-            }
-            const signedTxns = await lute.signTxns(txns);
-            return signedTxns;
+            if (!lute) throw new Error('Lute wallet not initialized');
+            // Lute expects array of {txn: base64} objects
+            return await lute.signTxns(txns);
         } else {
             throw new Error('Unknown wallet type');
         }
@@ -254,44 +302,41 @@ export const WalletProvider = ({ children }) => {
                 const luteInstance = new LuteConnect('TrustCampus');
                 setLute(luteInstance);
             } else if (savedType === 'pera' && peraWallet) {
-                // Reconnect Pera Wallet session
                 peraWallet.reconnectSession().then((accounts) => {
                     if (accounts && accounts.length > 0) {
-                        console.log('✓ Pera session restored:', accounts[0].substring(0, 8) + '...');
                         setAccount(accounts[0]);
                     } else {
-                        console.log('⚠ Pera session expired, clearing...');
-                        localStorage.removeItem('walletAddress');
-                        localStorage.removeItem('walletType');
-                        setAccount(null);
-                        setWalletType(null);
+                        disconnectWallet();
                     }
-                }).catch((err) => {
-                    console.error('Pera reconnect failed:', err);
-                    localStorage.removeItem('walletAddress');
-                    localStorage.removeItem('walletType');
-                    setAccount(null);
-                    setWalletType(null);
-                });
+                }).catch(() => disconnectWallet());
+            } else if (savedType === 'defly' && deflyWallet) {
+                deflyWallet.reconnectSession().then((accounts) => {
+                    if (accounts && accounts.length > 0) {
+                        setAccount(accounts[0]);
+                    } else {
+                        disconnectWallet();
+                    }
+                }).catch(() => disconnectWallet());
             }
         }
-    }, [peraWallet]);
+    }, [peraWallet, deflyWallet]);
 
-    // Listen for Pera Wallet disconnect events
+    // Listen for Defly disconnect
     useEffect(() => {
-        if (peraWallet) {
-            peraWallet.connector?.on('disconnect', () => {
-                console.log('Pera Wallet disconnected');
+        if (deflyWallet) {
+            deflyWallet.connector?.on('disconnect', () => {
+                console.log('Defly Wallet disconnected');
                 disconnectWallet();
             });
         }
-    }, [peraWallet]);
+    }, [deflyWallet]);
 
     return (
         <WalletContext.Provider value={{
             account,
             lute,
             peraWallet,
+            deflyWallet,
             walletType,
             connectWallet,
             disconnectWallet,

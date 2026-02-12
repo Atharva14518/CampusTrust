@@ -51,7 +51,7 @@ export default function WalletSelector({ isOpen, onClose, onSelectWallet }) {
                     {/* Pera Wallet */}
                     <button
                         onClick={() => handleWalletSelect('pera')}
-                        className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white p-4 rounded-xl transition flex items-center justify-between group"
+                        className="w-full bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-white p-4 rounded-xl transition flex items-center justify-between group"
                     >
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center">
@@ -59,7 +59,24 @@ export default function WalletSelector({ isOpen, onClose, onSelectWallet }) {
                             </div>
                             <div className="text-left">
                                 <div className="font-bold text-lg">Pera Wallet</div>
-                                <div className="text-sm text-cyan-200">Mobile & Desktop</div>
+                                <div className="text-sm text-yellow-100">Mobile App</div>
+                            </div>
+                        </div>
+                        <div className="text-white/50 group-hover:text-white transition">→</div>
+                    </button>
+
+                    {/* Defly Wallet */}
+                    <button
+                        onClick={() => handleWalletSelect('defly')}
+                        className="w-full bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white p-4 rounded-xl transition flex items-center justify-between group"
+                    >
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center">
+                                <span className="text-2xl">🦅</span>
+                            </div>
+                            <div className="text-left">
+                                <div className="font-bold text-lg">Defly Wallet</div>
+                                <div className="text-sm text-teal-100">Best for Mobile</div>
                             </div>
                         </div>
                         <div className="text-white/50 group-hover:text-white transition">→</div>

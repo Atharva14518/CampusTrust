@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@blockshake/defly-connect": "^1.2.1",
     "@perawallet/connect": "^1.5.0",
     "@tailwindcss/postcss": "^4.1.18",
     "@vitejs/plugin-react": "^5.1.1",
