@@ -19,6 +19,7 @@
     "canvas-confetti": "^1.9.4",
     "chart.js": "^4.5.1",
     "framer-motion": "^12.33.0",
+    "html5-qrcode": "^2.3.8",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.563.0",
     "lute-connect": "^1.6.3",

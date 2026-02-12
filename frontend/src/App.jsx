@@ -17,6 +17,7 @@ import Feedback from './pages/Feedback';
 import Leaderboard from './pages/Leaderboard';
 import TeacherDashboard from './pages/TeacherDashboard';
 import Voting from './pages/Voting';
+import QRScanner from './pages/QRScanner';
 import { WalletProvider } from './context/WalletContext';
 
 function App() {
@@ -32,7 +33,8 @@ function App() {
             <Route path="/teacher" element={<TeacherDashboard />} />
             <Route path="/hod" element={<Admin />} />
             <Route path="/attendance" element={<Attendance />} />
-            <Route path="/scan" element={<AttendanceScan />} />
+            <Route path="/scan" element={<QRScanner />} />
+            <Route path="/mark-attendance" element={<AttendanceScan />} />
             <Route path="/certificates" element={<Certificates />} />
             <Route path="/verify/:id" element={<Verification />} />
             <Route path="/admin" element={<Admin />} />
