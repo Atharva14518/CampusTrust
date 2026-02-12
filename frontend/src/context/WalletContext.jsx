@@ -198,17 +198,22 @@ export const WalletProvider = ({ children }) => {
                 throw new Error('Pera Wallet not initialized. Please reconnect.');
             }
 
-            // Pera Wallet expects an array of base64-encoded transactions (without wrapper objects)
-            // Convert from Lute format [{txn: base64}] to Pera format [base64]
+            // Pera Wallet expects transaction OBJECTS (not base64)
+            // Convert from Lute format [{txn: base64}] to Pera format [txnObjects]
             const txnArray = Array.isArray(txns) ? txns : [txns];
-            const base64Txns = txnArray.map(t => {
-                // If it's already in Lute format {txn: base64}, extract the base64
-                if (t.txn) return t.txn;
-                // Otherwise it's already base64
+            const txnObjects = txnArray.map(t => {
+                // If it's in Lute format {txn: base64}, decode it
+                if (t.txn) {
+                    const decoded = algosdk.decodeUnsignedTransaction(
+                        Buffer.from(t.txn, 'base64')
+                    );
+                    return decoded;
+                }
+                // Otherwise assume it's already a transaction object
                 return t;
             });
 
-            const signedTxns = await peraWallet.signTransaction([base64Txns]);
+            const signedTxns = await peraWallet.signTransaction([txnObjects]);
             return signedTxns;
         } else if (walletType === 'lute') {
             // Lute Wallet expects array of {txn: base64} objects
